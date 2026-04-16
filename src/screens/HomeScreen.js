@@ -40,7 +40,7 @@ Author: ${auth}
 Summary: ${summ}
 Full Content: ${full}
 
-Please provide complete detailed explanations (ideally 1 paragraph (20-70words) for summaries or complex questions) with a professional and journalistic tone. Focus on depth and context rather than brevity. Do not use markdown unless formatting a list.`;
+Please provide complete detailed explanations (ideally 1 paragraph (less than 100words) for summaries or complex questions) with a professional and journalistic tone. Focus on depth and context rather than brevity. Do not use markdown unless formatting a list.`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`, {

@@ -140,11 +140,21 @@ export async function getUserProfile() {
 
 /** Subscribe to real-time profile updates */
 export function subscribeUserProfile(callback) {
-  const user = auth.currentUser;
-  if (!user || user.isAnonymous) { callback(null); return () => {}; }
-  return onSnapshot(doc(db, 'users', user.uid), snap => {
-    callback(snap.exists() ? { id: snap.id, ...firestoreToPlain(snap.data()) } : null);
+  let unsubFirestore = () => {};
+  const unsubAuth = onAuthStateChanged(auth, (user) => {
+    unsubFirestore();
+    if (!user || user.isAnonymous) {
+      callback(null);
+      return;
+    }
+    unsubFirestore = onSnapshot(doc(db, 'users', user.uid), snap => {
+      callback(snap.exists() ? { id: snap.id, ...firestoreToPlain(snap.data()) } : null);
+    });
   });
+  return () => {
+    unsubAuth();
+    unsubFirestore();
+  };
 }
 
 /** Update display name / photoUrl */
@@ -230,13 +240,23 @@ export async function isArticleSaved(articleId) {
 
 /** Subscribe to all bookmarks for current user */
 export function subscribeBookmarks(callback) {
-  const user = auth.currentUser;
-  if (!user) { callback([]); return () => {}; }
-  const q = query(
-    collection(db, 'users', user.uid, 'bookmarks'),
-    orderBy('savedAt', 'desc')
-  );
-  return onSnapshot(q, snap => callback(snap2arr(snap)));
+  let unsubFirestore = () => {};
+  const unsubAuth = onAuthStateChanged(auth, (user) => {
+    unsubFirestore();
+    if (!user) {
+      callback([]);
+      return;
+    }
+    const q = query(
+      collection(db, 'users', user.uid, 'bookmarks'),
+      orderBy('savedAt', 'desc')
+    );
+    unsubFirestore = onSnapshot(q, snap => callback(snap2arr(snap)));
+  });
+  return () => {
+    unsubAuth();
+    unsubFirestore();
+  };
 }
 
 /** Toggle save/unsave — returns new saved state */
