@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lucid Newsroom - For You</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-fixed-dim": "#bebdec",
+              "surface-tint": "#526075",
+              "on-tertiary": "#fbf7ff",
+              "background": "#f7f9fb",
+              "on-surface-variant": "#596064",
+              "primary-fixed-dim": "#c7d5ee",
+              "on-error": "#fff7f6",
+              "on-error-container": "#6e0a12",
+              "on-secondary-container": "#445362",
+              "surface-variant": "#dce4e8",
+              "tertiary": "#5b5b85",
+              "secondary-container": "#d4e4f6",
+              "on-background": "#2c3437",
+              "tertiary-container": "#cccafb",
+              "surface-container-lowest": "#ffffff",
+              "inverse-primary": "#d5e3fd",
+              "on-tertiary-fixed": "#2e2e55",
+              "surface": "#f7f9fb",
+              "secondary-dim": "#465563",
+              "error": "#a83836",
+              "inverse-on-surface": "#9a9d9f",
+              "on-secondary-fixed-variant": "#4e5d6c",
+              "primary": "#526075",
+              "tertiary-dim": "#4f4f78",
+              "primary-container": "#d5e3fd",
+              "on-primary-container": "#455367",
+              "secondary": "#516170",
+              "on-surface": "#2c3437",
+              "primary-dim": "#465469",
+              "on-secondary": "#f6f9ff",
+              "surface-container-low": "#f0f4f7",
+              "secondary-fixed-dim": "#c6d6e8",
+              "secondary-fixed": "#d4e4f6",
+              "primary-fixed": "#d5e3fd",
+              "on-tertiary-container": "#42426a",
+              "inverse-surface": "#0b0f10",
+              "surface-dim": "#d4dbdf",
+              "on-secondary-fixed": "#32414f",
+              "surface-bright": "#f7f9fb",
+              "outline": "#747c80",
+              "surface-container": "#eaeff2",
+              "error-dim": "#67040d",
+              "error-container": "#fa746f",
+              "surface-container-high": "#e3e9ed",
+              "on-tertiary-fixed-variant": "#4b4b73",
+              "surface-container-highest": "#dce4e8",
+              "on-primary-fixed-variant": "#4e5c71",
+              "tertiary-fixed": "#cccafb",
+              "on-primary": "#f8f8ff",
+              "outline-variant": "#acb3b7",
+              "on-primary-fixed": "#324054"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-black text-on-background font-body h-screen w-full overflow-hidden relative">
+<!-- Full-Screen Background Image -->
+<div class="fixed inset-0 -z-20 overflow-hidden">
+<img alt="Clean, high-tech, futuristic laboratory with white lighting and robotic arms." class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7ikVKa1LxbZepBk_FfEbRN1T2hKhk6txcwb1DiQGasRCxwVLaV9GMQ6_506o9hOHAENMLIehclA3xJOy43G2CIWwQTv9X7xHpy21HdF4pe16eGwVpho0s-pD9rH2Nksj7-NFavdpOZ98t0lxyY6AXDBpHK1JyjT4jQ5qpzIZ_WtbZka_CFivtwhihNjlaf7vIzw0h5WaWVVGHhJiNqniUCEhVLeEPxWPF1hrkborOQNGnZT9rdCq6EDGvtNS1sDpAvwtDYn0vja4y"/>
+<div class="absolute inset-0 bg-black/30"></div>
+</div>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 py-3">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform duration-200">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+<img alt="Brand Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2JDBW132pxEwrJB62N7e_QkUOJbqcFtQYQMnXxfwsF75ENAT8choQ3ye_jrnlhIEVMlOvTbWgPUhOFQIt4Ht9B3pyaQBVLVYULKkR_zA0VKng7w9mFNPwPuPzQrRliSHws3ACpnNrxvBpd6Em29RNHS_lRBbyTaB8rpdNdGcGfN7QbaMnnz0PxBNgv03ptgVkLjWwoK91qeg_K4QVLhDiHP6NEzHw87-c6Eka5kcNUtBsRNnmON_GPKN4Nw2PaflQSYdV39MQz9E9"/>
+</div>
+</button>
+<h1 class="text-xl font-extrabold tracking-tighter text-white font-headline">NEWS६९</h1>
+</div>
+<button class="text-white active:scale-95 transition-transform duration-200"><span class="material-symbols-outlined" data-icon="play_arrow">play_arrow</span></button>
+</header>
+<!-- Main Content -->
+<main class="h-full w-full relative flex flex-col items-center overflow-hidden">
+<!-- Next Story Indicator - Moved Higher -->
+<div class="absolute top-20 left-0 right-0 z-20 flex flex-col items-center gap-0.5 opacity-60">
+<span class="material-symbols-outlined text-white text-xs" data-icon="keyboard_double_arrow_up">keyboard_double_arrow_up</span>
+<span class="text-[9px] text-white font-bold tracking-[0.2em] uppercase">Next Story</span>
+</div>
+<!-- Persistent Scrim - Adjusted for centered content -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 pointer-events-none z-10"></div>
+<!-- Centered News Content Block -->
+<div class="h-full w-full px-5 flex flex-col justify-center relative z-20 pt-12 pb-40">
+<div class="w-full max-w-lg mx-auto space-y-5">
+<!-- Metadata Row -->
+<div class="flex items-center justify-between">
+<div class="flex items-center -space-x-2">
+<div class="w-7 h-7 rounded-full border border-white/40 bg-white overflow-hidden flex items-center justify-center shadow-lg">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2JDBW132pxEwrJB62N7e_QkUOJbqcFtQYQMnXxfwsF75ENAT8choQ3ye_jrnlhIEVMlOvTbWgPUhOFQIt4Ht9B3pyaQBVLVYULKkR_zA0VKng7w9mFNPwPuPzQrRliSHws3ACpnNrxvBpd6Em29RNHS_lRBbyTaB8rpdNdGcGfN7QbaMnnz0PxBNgv03ptgVkLjWwoK91qeg_K4QVLhDiHP6NEzHw87-c6Eka5kcNUtBsRNnmON_GPKN4Nw2PaflQSYdV39MQz9E9"/>
+</div>
+<div class="w-7 h-7 rounded-full border border-white/40 bg-white overflow-hidden flex items-center justify-center shadow-lg">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqknDr5CJNdYgJ6WlF-ccYrKjCwHA7VYidiLK1BftbZ9jLShnCcQmiUn6867Ue-SUch9ND9Y2m0cP_iFZMOzMSFhSuD-bkkHNUyRZjotIPxrqJPABsLFK7_olrZfPKSLAlacH9DU4ffJsmW2VFJDHN6p3cjYRZYdE5NK0h6teC3fMEAv7UcDotlCEFHSV8GUicdqcmUWSMKB4MOp_mfRmRDTasozzsgdVjmh6KcqUa08HCGUI8x__mjf1FTWNveLfFsDpEFKqHWJ6s"/>
+</div>
+<div class="w-7 h-7 rounded-full border border-white/40 bg-white overflow-hidden flex items-center justify-center shadow-lg">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZprWzMnLXrwM8XPnqOKxDdZz5RdTn0mljqNMOcXlW6GFpwU3fxASU8ASbt7HggeSOvmx9FtmSdKiDr4lFyXxYCNrIjwFTlOShwcLjaaIleUHQkcrpE4CooO5UupJO2iy9OZDOzETC6gavt3gEK3OFxnVYhcMmovNvYQjCn7ie8-gbevnI-WBbGmKdVklh0xbsbLO15drZf_24Vs-k6XkOgqB9Gp-_Q4ilWSTEKjGVEI7I-lS76PABAeXNVEmszu-83mlvxKPBJ6Y6"/>
+</div>
+<span class="ml-4 text-[11px] font-bold text-white font-label tracking-wide drop-shadow-md">+4 Sources</span>
+</div>
+<span class="text-[11px] font-bold text-white/80 font-label uppercase tracking-widest drop-shadow-md">12m ago</span>
+</div>
+<!-- Article Details -->
+<div class="space-y-3">
+<h2 class="font-extrabold text-white leading-tight font-headline tracking-tight text-3xl drop-shadow-lg">
+                        The Quantum Leap: New Silicon Chip Promises Instant Processing
+                    </h2>
+<p class="text-white/90 leading-snug font-body text-[15px] drop-shadow-md">Global tech leaders are heralding a massive breakthrough in semiconductor design today, as researchers unveil a hybrid silicon-photonics processor capable of managing data at speeds previously thought impossible outside of laboratory settings. This development marks the definitive end of traditional Moore's Law limitations, potentially ushering in an era of near-instantaneous global computation while reducing energy consumption by an unprecedented forty percent across large-scale data center architectures worldwide.</p>
+</div>
+<!-- Action Buttons Below Content -->
+<!-- Repositioned Action Buttons -->
+<div class="absolute bottom-24 left-5 flex items-center gap-3">
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-white text-primary shadow-xl active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-2xl" data-icon="bookmark">bookmark</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-xl text-white border border-white/30 shadow-xl active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-2xl" data-icon="share">share</span>
+</button>
+</div>
+<div class="absolute bottom-24 right-5">
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-xl text-white border border-white/30 shadow-xl active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-2xl" data-icon="auto_awesome">auto_awesome</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar - Fixed at bottom -->
+<div class="absolute bottom-6 left-0 right-0 z-30 px-5 w-full flex justify-center">
+<nav class="backdrop-blur-2xl w-full max-w-lg rounded-full border border-white/10 flex justify-around items-center px-1 py-1 shadow-2xl bg-black/50">
+<!-- Active Tab: For You -->
+<button class="flex flex-col items-center justify-center bg-white text-primary rounded-full py-2 transition-all duration-300 active:scale-90 flex-1">
+<span class="material-symbols-outlined text-2xl" data-icon="home" style='font-variation-settings: "FILL" 1;'>home</span>
+</button>
+<!-- Inactive Tab: News -->
+<button class="flex flex-col items-center justify-center text-white/70 hover:text-white transition-all duration-200 py-2 active:scale-90 flex-1">
+<span class="material-symbols-outlined text-2xl" data-icon="newspaper">newspaper</span>
+</button>
+<!-- Inactive Tab: Profile -->
+<button class="flex flex-col items-center justify-center text-white/70 hover:text-white transition-all duration-200 py-2 active:scale-90 flex-1">
+<span class="material-symbols-outlined text-2xl" data-icon="person">person</span>
+</button>
+</nav>
+</div>
+</main>
+</body></html>

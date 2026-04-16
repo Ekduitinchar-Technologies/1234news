@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lucid Newsroom — Admin CMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ── LOGIN SCREEN ────────────────────────────────────────── -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-mark">◈</div>
+        <div>
+          <div class="logo-name">Lucid <span>Admin</span></div>
+          <div class="logo-sub">Newsroom CMS</div>
+        </div>
+      </div>
+      <div id="loginError" class="error-banner hidden"></div>
+      <div class="form-group">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="admin@example.com" />
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter') AUTH.login()" />
+      </div>
+      <button class="btn-primary btn-full" id="loginBtn" onclick="AUTH.login()">
+        Sign In
+      </button>
+    </div>
+  </div>
+
+  <!-- ── MAIN APP ────────────────────────────────────────────── -->
+  <div id="mainApp" class="app-layout hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="logo-mark sm">◈</div>
+        <div class="logo-name">Lucid <span>Admin</span></div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="articles" onclick="UI.switchTab('articles')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Articles
+          <span class="nav-badge" id="badge-articles">0</span>
+        </button>
+        <button class="nav-item" data-tab="trending" onclick="UI.switchTab('trending')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+          Trending
+          <span class="nav-badge" id="badge-trending">0</span>
+        </button>
+        <button class="nav-item" data-tab="explainers" onclick="UI.switchTab('explainers')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Explainers
+          <span class="nav-badge" id="badge-explainers">0</span>
+        </button>
+        <button class="nav-item" data-tab="polls" onclick="UI.switchTab('polls')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+          </svg>
+          Polls
+          <span class="nav-badge" id="badge-polls">0</span>
+        </button>
+        <button class="nav-item" data-tab="discussions" onclick="UI.switchTab('discussions')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Discussions
+          <span class="nav-badge" id="badge-discussions">0</span>
+        </button>
+        <button class="nav-item" data-tab="spotlights" onclick="UI.switchTab('spotlights')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          Spotlights
+          <span class="nav-badge" id="badge-spotlights">0</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <span id="userEmail" class="user-email-text">admin</span>
+        </div>
+        <button class="icon-btn" onclick="AUTH.logout()" title="Sign out">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+
+      <!-- ARTICLES TAB -->
+      <div id="tab-articles" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h1>Articles</h1>
+            <p class="pane-subtitle">Main news for the feed — featured ones appear on Home screen</p>
+          </div>
+          <button class="btn-primary" onclick="ARTICLES.openForm()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Article
+          </button>
+        </div>
+        <div class="filter-bar">
+          <button class="filter-btn active" data-filter="all" onclick="ARTICLES.setFilter('all', this)">All</button>
+          <button class="filter-btn" data-filter="published" onclick="ARTICLES.setFilter('published', this)">Published</button>
+          <button class="filter-btn" data-filter="draft" onclick="ARTICLES.setFilter('draft', this)">Drafts</button>
+          <button class="filter-btn" data-filter="featured" onclick="ARTICLES.setFilter('featured', this)">Featured</button>
+        </div>
+        <div id="articlesList" class="items-list">
+          <div class="skeleton-list">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRENDING TAB -->
+      <div id="tab-trending" class="tab-pane hidden">
+        <div class="pane-header">
+          <div>
+            <h1>Trending</h1>
+            <p class="pane-subtitle">Curated trending topics shown separately in the app</p>
+          </div>
+          <button class="btn-primary" onclick="TRENDING.openForm()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Topic
+          </button>
+        </div>
+        <div id="trendingList" class="items-list">
+          <div class="skeleton-list">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPLAINERS TAB -->
+      <div id="tab-explainers" class="tab-pane hidden">
+        <div class="pane-header">
+          <div>
+            <h1>Explainers</h1>
+            <p class="pane-subtitle">Long-form explainer articles with in-depth coverage</p>
+          </div>
+          <button class="btn-primary" onclick="EXPLAINERS.openForm()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Explainer
+          </button>
+        </div>
+        <div id="explainersList" class="items-list">
+          <div class="skeleton-list">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POLLS TAB -->
+      <div id="tab-polls" class="tab-pane hidden">
+        <div class="pane-header">
+          <div>
+            <h1>Polls</h1>
+            <p class="pane-subtitle">Interactive polls on trending issues</p>
+          </div>
+          <button class="btn-primary" onclick="POLLS.openForm()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Poll
+          </button>
+        </div>
+        <div id="pollsList" class="items-list"></div>
+      </div>
+
+      <!-- DISCUSSIONS TAB -->
+      <div id="tab-discussions" class="tab-pane hidden">
+        <div class="pane-header">
+          <div>
+            <h1>Discussions</h1>
+            <p class="pane-subtitle">Live discussion topics</p>
+          </div>
+          <button class="btn-primary" onclick="DISCUSSIONS.openForm()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Chat
+          </button>
+        </div>
+        <div id="discussionsList" class="items-list"></div>
+      </div>
+
+      <!-- SPOTLIGHTS TAB -->
+      <div id="tab-spotlights" class="tab-pane hidden">
+        <div class="pane-header">
+          <div>
+            <h1>Spotlights</h1>
+            <p class="pane-subtitle">Featured personnel or story spotlights</p>
+          </div>
+          <button class="btn-primary" onclick="SPOTLIGHTS.openForm()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Spotlight
+          </button>
+        </div>
+        <div id="spotlightsList" class="items-list"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── DRAWER ─────────────────────────────────────────────── -->
+  <div id="drawerOverlay" class="drawer-overlay hidden" onclick="UI.closeDrawer()"></div>
+  <div id="drawer" class="drawer hidden">
+    <div class="drawer-header">
+      <h3 id="drawerTitle">New Article</h3>
+      <button class="icon-btn" onclick="UI.closeDrawer()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div id="drawerBody" class="drawer-body"></div>
+    <div class="drawer-footer">
+      <button class="btn-ghost" onclick="UI.closeDrawer()">Cancel</button>
+      <button class="btn-primary" id="drawerSaveBtn">Save</button>
+    </div>
+  </div>
+
+  <!-- ── DELETE CONFIRM ──────────────────────────────────────── -->
+  <div id="confirmOverlay" class="drawer-overlay hidden"></div>
+  <div id="confirmDialog" class="confirm-dialog hidden">
+    <h4 id="confirmTitle">Delete article?</h4>
+    <p id="confirmMsg">This cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn-ghost" onclick="UI.closeConfirm()">Cancel</button>
+      <button class="btn-danger" id="confirmOkBtn">Delete</button>
+    </div>
+  </div>
+
+  <!-- ── TOAST ───────────────────────────────────────────────── -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

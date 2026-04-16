@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admin check: UID must be a document in the admins collection
+    function isAdmin() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Registered (non-anonymous) user
+    function isRegistered() {
+      return request.auth != null &&
+             request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    // Admins collection — bootstrapped manually via Firebase console
+    match /admins/{adminId} {
+      allow read: if request.auth != null && request.auth.uid == adminId;
+      allow write: if false;
+    }
+
+    // Articles — published articles are public; admin can read drafts & write
+    match /articles/{articleId} {
+      allow read: if resource.data.isPublished == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+
+      // Comments — public read; only registered users can create/delete own
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isRegistered()
+                      && request.resource.data.userId == request.auth.uid
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 1000;
+        allow delete: if isRegistered()
+                      && resource.data.userId == request.auth.uid;
+        allow update: if false; // comments are immutable
+      }
+    }
+
+    // Trending — public read, admin write
+    match /trending/{topicId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Explainers — public read, admin write
+    match /explainers/{explainerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users — own profile only
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Interactions — any auth user can create own; admin can read all
+    match /interactions/{interactionId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+  }
+}
