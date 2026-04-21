@@ -725,3 +725,329 @@ a { color: inherit; text-decoration: none; }
   transition: background 0.2s;
 }
 .img-remove-btn:hover { background: var(--red); }
+
+/* ── AI FETCH TAB ───────────────────────────────────────────────── */
+
+/* Sidebar badge highlight */
+.af-badge {
+  background: linear-gradient(135deg, var(--accent), #a78bfa) !important;
+  color: #fff !important;
+  font-size: 9px !important;
+  letter-spacing: 0.5px;
+}
+
+/* Section blocks */
+.af-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.af-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  margin-bottom: 16px;
+}
+
+/* Sources list */
+.af-sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.af-source-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color var(--transition);
+}
+.af-source-row:hover { border-color: var(--border-md); }
+.af-source-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  min-width: 160px;
+}
+.af-source-label input[type=checkbox] {
+  width: 15px; height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.af-source-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.af-source-url {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Source group label */
+.af-source-group-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  padding: 10px 0 6px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.af-source-group-label:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+/* Logo/letter inside source row */
+.af-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.af-source-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+.af-source-letter {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.af-source-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-left: 4px;
+}
+
+/* Logo inside result card source badge */
+.af-badge-logo {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  object-fit: contain;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.af-remove-btn {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  color: var(--text-3);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition), color var(--transition);
+  line-height: 1;
+}
+.af-remove-btn:hover { background: var(--red-dim); color: var(--red); }
+
+/* Add custom source row */
+.af-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.af-add-row input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border-md);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.af-add-row input:focus { border-color: var(--accent); }
+.af-add-row input::placeholder { color: var(--text-3); }
+
+/* Controls section */
+.af-controls-section { background: var(--surface); }
+.af-controls-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Freshness buttons */
+.af-freshness-bar { display: flex; gap: 6px; }
+.af-fresh-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--card);
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+}
+.af-fresh-btn:hover { border-color: var(--border-md); color: var(--text); }
+.af-fresh-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+/* Run button */
+.af-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(124,110,232,0.4);
+  transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+  white-space: nowrap;
+}
+.af-run-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(124,110,232,0.5); }
+.af-run-btn:active { transform: translateY(0); }
+.af-run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Progress bar */
+.af-prog-wrap {
+  margin-top: 18px;
+}
+.af-prog-track {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.af-prog-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #a78bfa);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.af-prog-label {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* Log panel */
+.af-log {
+  margin-top: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  max-height: 160px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 11.5px;
+  color: var(--text-3);
+  line-height: 1.6;
+}
+.af-log-line { color: var(--text-2); }
+
+/* Results header */
+.af-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* Empty state */
+.af-empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--text-3);
+}
+.af-empty svg { margin-bottom: 14px; }
+.af-empty p { font-size: 13.5px; }
+
+/* Result card */
+.af-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  transition: border-color var(--transition);
+}
+.af-card:hover { border-color: var(--border-md); }
+
+.af-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.af-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.af-src-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(124,110,232,0.12);
+  color: #b4aaff;
+  border: 1px solid rgba(124,110,232,0.2);
+  transition: background var(--transition);
+  cursor: pointer;
+}
+.af-src-badge:hover { background: rgba(124,110,232,0.22); }
+
+.af-card-btns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.af-btn-draft {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--card);
+  color: var(--text-2);
+  border: 1px solid var(--border-md);
+  transition: all var(--transition);
+}
+.af-btn-draft:hover { background: var(--card-hover); color: var(--text); }
+.af-btn-pub {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 10px var(--accent-glow);
+  transition: opacity var(--transition);
+}
+.af-btn-pub:hover { opacity: 0.88; }
+.af-btn-disc {
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+}
+.af-btn-disc:hover { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,0.25); }
+

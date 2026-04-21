@@ -13,6 +13,7 @@ import GlobalHeader from '../components/GlobalHeader';
 
 import { auth, logBehaviour, getFeaturedArticles, toggleSaveArticle, subscribeBookmarks, isArticleSaved } from '../services/firebaseService';
 import { timeAgo } from '../utils/timeUtils';
+import { getSourceLogoByName } from '../data/sources';
 
 // ─────────────────────────────────────────────────────────────────
 // AI ASSISTANT — Gemini API Integration
@@ -448,10 +449,12 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.sourcesContainer}>
               {(item.sources && item.sources.length > 0) ? (
                 <>
-                  {item.sources.slice(0, 3).map((src, idx) => (
+                  {item.sources.slice(0, 3).map((src, idx) => {
+                    const logoUrl = getSourceLogoByName(src.label || src.name || src.source) || src.iconUrl || src.logo;
+                    return (
                     <View key={idx} style={[styles.sourceAvatar, { zIndex: 3 - idx, marginLeft: idx === 0 ? 0 : -10 }]}>
-                      {src.iconUrl ? (
-                        <Image source={{ uri: src.iconUrl }} style={styles.avatarImage} />
+                      {logoUrl ? (
+                        <Image source={{ uri: logoUrl }} style={styles.avatarImage} />
                       ) : (
                         <View style={[styles.avatarImage, { backgroundColor: '#526075', alignItems: 'center', justifyContent: 'center' }]}>
                           <Text style={{ color: '#fff', fontSize: 10, fontFamily: 'Inter_700Bold' }}>
@@ -460,7 +463,8 @@ export default function HomeScreen({ navigation }) {
                         </View>
                       )}
                     </View>
-                  ))}
+                    );
+                  })}
                   <Text style={styles.sourceText}>
                     {item.sources.length > 3
                       ? `+${item.sources.length - 3} Sources`

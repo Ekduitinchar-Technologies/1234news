@@ -9,6 +9,7 @@ import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
 import { auth, subscribeUserProfile, updateUserProfile, subscribeBookmarks, toggleSaveArticle, loginUser, registerUser, logoutUser } from '../services/firebaseService';
 import GlobalHeader from '../components/GlobalHeader';
+import { ALL_SOURCES, DEFAULT_ENABLED_IDS } from '../data/sources';
 
 const colors = {
   background: '#f7f9fb',
@@ -28,20 +29,7 @@ const colors = {
   onSecondaryContainer: '#445362',
 };
 
-const ALL_MOCK_SOURCES = [
-  { id: '1', name: 'Kantipur', sub: 'National Daily', letter: 'K' },
-  { id: '2', name: 'Online Khabar', sub: 'Digital First', letter: 'O' },
-  { id: '3', name: 'Ratopati', sub: 'Breaking News', letter: 'R' },
-  { id: '4', name: 'Setopati', sub: 'Social & Political', letter: 'S' },
-  { id: '5', name: 'Khabarhub', sub: 'Mainstream Bias-free', letter: 'K' },
-  { id: '6', name: 'Nepalnews', sub: 'Oldest Digital', letter: 'N' },
-  { id: '7', name: 'The Himalayan', sub: 'English Daily', letter: 'H' },
-  { id: '8', name: 'Kathmandu Post', sub: 'Premier Weekly', letter: 'K' },
-  { id: '9', name: 'My Republica', sub: 'Investigative', letter: 'M' },
-  { id: '10', name: 'Annapurna Post', sub: 'Visual News', letter: 'A' },
-  { id: '11', name: 'Ujyaalo', sub: 'Radio Network', letter: 'U' },
-  { id: '12', name: 'RSS Nepal', sub: 'News Agency', letter: 'R' },
-];
+// ALL_SOURCES is imported from '../data/sources' — see that file for the full list.
 
 
 export default function ProfileScreen({ navigation }) {
@@ -54,7 +42,7 @@ export default function ProfileScreen({ navigation }) {
   const [readingGoal, setReadingGoal] = useState(25);
   const [tags, setTags] = useState(['Tech', 'Politics', 'Sports', 'Science', 'Business', 'Art', 'Design']);
   const [language, setLanguage] = useState('English (US)');
-  const [selectedSources, setSelectedSources] = useState(['1', '2', '3']);
+  const [selectedSources, setSelectedSources] = useState(DEFAULT_ENABLED_IDS);
   const [userName, setUserName] = useState('Guest Reader');
   const [userAvatar, setUserAvatar] = useState('https://picsum.photos/seed/anon/100/100');
   const [stats, setStats] = useState({ articlesRead: 0, commentsPosted: 0 });
@@ -238,7 +226,7 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
-  const visibleSources = ALL_MOCK_SOURCES.filter(s => selectedSources.includes(s.id)).slice(0, 4);
+  const visibleSources = ALL_SOURCES.filter(s => selectedSources.includes(s.id)).slice(0, 4);
 
   const getBlurStyle = () => {
     if (Platform.OS === 'android') {
@@ -321,7 +309,18 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.sourcesGrid}>
             {visibleSources.map(source => (
                <TouchableOpacity key={source.id} style={styles.sourceCard} activeOpacity={0.7}>
-                 <View style={styles.sourceIconBox}><Text style={styles.sourceIconLetter}>{source.letter}</Text></View>
+                 <View style={styles.sourceIconBox}>
+                   {source.logoUrl ? (
+                     <Image
+                       source={{ uri: source.logoUrl }}
+                       style={{ width: 28, height: 28, borderRadius: 6 }}
+                       resizeMode="contain"
+                       onError={() => {}}
+                     />
+                   ) : (
+                     <Text style={styles.sourceIconLetter}>{source.letter}</Text>
+                   )}
+                 </View>
                  <View style={styles.sourceInfo}>
                    <Text style={styles.sourceName} numberOfLines={1}>{source.name}</Text>
                    <Text style={styles.sourceSub} numberOfLines={1}>{source.sub}</Text>
@@ -553,7 +552,7 @@ export default function ProfileScreen({ navigation }) {
             <ScrollView contentContainerStyle={{ paddingTop: Math.max(insets.top, 12) + 80, paddingHorizontal: 20, paddingBottom: insets.bottom + 40 }}>
               <Text style={styles.modalSubtitle}>Select which outlets aggregate to your For You feed.</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                {ALL_MOCK_SOURCES.map(source => {
+                {ALL_SOURCES.map(source => {
                   const isActive = selectedSources.includes(source.id);
                   return (
                     <TouchableOpacity 
@@ -563,11 +562,23 @@ export default function ProfileScreen({ navigation }) {
                       activeOpacity={0.7}
                     >
                       <View style={[styles.sourceIconBoxLarge, isActive && { backgroundColor: colors.primaryContainer }]}>
-                        <Text style={[styles.sourceIconLetter, isActive && { color: colors.primary }]}>{source.letter}</Text>
+                        {source.logoUrl ? (
+                          <Image
+                            source={{ uri: source.logoUrl }}
+                            style={{ width: 32, height: 32, borderRadius: 8 }}
+                            resizeMode="contain"
+                            onError={() => {}}
+                          />
+                        ) : (
+                          <Text style={[styles.sourceIconLetter, isActive && { color: colors.primary }]}>{source.letter}</Text>
+                        )}
                       </View>
                       <View style={styles.sourceInfoFull}>
                         <Text style={styles.sourceNameLarge}>{source.name}</Text>
                         <Text style={styles.sourceSubLarge}>{source.sub}</Text>
+                        <Text style={{ fontSize: 10, color: source.country === 'NP' ? '#b45309' : colors.onSurfaceVariant, fontFamily: 'Inter_600SemiBold', marginTop: 2 }}>
+                          {source.country === 'NP' ? '🇳🇵 Nepal' : '🌐 International'}
+                        </Text>
                       </View>
                       <Switch 
                         value={isActive} 

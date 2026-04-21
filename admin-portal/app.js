@@ -94,6 +94,7 @@ auth.onAuthStateChanged(async (user) => {
     POLLS.listen();
     DISCUSSIONS.listen();
     SPOTLIGHTS.listen();
+    AIFETCH.listen();
   } else {
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('mainApp').classList.add('hidden');
@@ -467,12 +468,12 @@ const ARTICLES = {
       </div>
 
       <div class="form-group">
-        <label>Body <small style="color:var(--text-3);font-weight:400">(300–400 words — Article Detail)</small></label>
+        <label>Body <small style="color:var(--text-3);font-weight:400">(400–600 words — Article Detail)</small></label>
         <textarea id="f_body" rows="12" placeholder="Full article body…"
-                  oninput="UI.updateWordCount('f_body','bodyBar','bodyCount',300,400)">${article?.body || ''}</textarea>
+                  oninput="UI.updateWordCount('f_body','bodyBar','bodyCount',400,600)">${article?.body || ''}</textarea>
         <div class="word-count-bar">
           <div class="word-bar-track"><div class="word-bar-fill" id="bodyBar" style="width:0%"></div></div>
-          <span class="word-count" id="bodyCount">0 / 400 words</span>
+          <span class="word-count" id="bodyCount">0 / 600 words</span>
         </div>
       </div>
 
@@ -506,7 +507,7 @@ const ARTICLES = {
     // Populate word counts + sources after DOM update
     setTimeout(() => {
       UI.updateWordCount('f_summary','sumBar','sumCount',1,69);
-      UI.updateWordCount('f_body','bodyBar','bodyCount',300,400);
+      UI.updateWordCount('f_body','bodyBar','bodyCount',400,600);
       UI.renderSources();
     }, 10);
   },

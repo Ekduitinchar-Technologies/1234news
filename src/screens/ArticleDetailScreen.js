@@ -18,6 +18,7 @@ import {
   isArticleSaved,
   getArticleById
 } from '../services/firebaseService';
+import { getSourceLogoByName } from '../data/sources';
 
 const categoryColors = {
   tech:          { bg: '#e2e8f0', text: '#334155' },
@@ -289,17 +290,14 @@ export default function ArticleDetailScreen({ route, navigation }) {
             {/* ── Ad Slot A ── */}
             <AdBanner variant="a" />
 
-            {/* Summary */}
-            <Text style={s.summary}>{article.summary}</Text>
-
             {/* Full Body */}
             {fullLoading ? (
               <View style={{ paddingVertical: 40, alignItems: 'center' }}>
                 <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={{ marginTop: 10, color: '#94a3b8', fontSize: 13 }}>Loading full story...</Text>
               </View>
-            ) : article.fullBody ? (
-              <Text style={s.body}>{article.fullBody}</Text>
+            ) : (article.fullBody || article.body) ? (
+              <Text style={s.body}>{article.fullBody || article.body}</Text>
             ) : null}
 
             {/* ── Ad Slot B ── */}
@@ -311,7 +309,9 @@ export default function ArticleDetailScreen({ route, navigation }) {
                 <MaterialIcons name="verified" size={16} color="#526075" />
                 <Text style={s.sectionTitle}>Sources</Text>
               </View>
-              {(article.sources || []).map((src, i) => (
+              {(article.sources || []).map((src, i) => {
+                const logoUrl = getSourceLogoByName(src.label || src.name || src.source) || src.iconUrl || src.logo;
+                return (
                 <TouchableOpacity
                   key={i}
                   style={s.sourceRow}
@@ -319,12 +319,17 @@ export default function ArticleDetailScreen({ route, navigation }) {
                   activeOpacity={0.7}
                 >
                   <View style={s.sourceIcon}>
-                    <MaterialIcons name="open-in-new" size={14} color="#526075" />
+                    {logoUrl ? (
+                      <Image source={{ uri: logoUrl }} style={{ width: 20, height: 20, borderRadius: 4 }} resizeMode="contain" />
+                    ) : (
+                      <MaterialIcons name="open-in-new" size={14} color="#526075" />
+                    )}
                   </View>
                   <Text style={s.sourceLabel}>{src.label || src.name || src.source || 'Original Source'}</Text>
                   <MaterialIcons name="chevron-right" size={18} color="#cbd5e1" style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
-              ))}
+                );
+              })}
             </View>
 
             {/* ── Like & Stats bar ── */}

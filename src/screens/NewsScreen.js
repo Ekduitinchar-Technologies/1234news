@@ -26,6 +26,7 @@ import {
   getSpotlights
 } from '../services/firebaseService';
 import { timeAgo } from '../utils/timeUtils';
+import { getSourceLogoByName } from '../data/sources';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -779,10 +780,12 @@ export default function NewsScreen() {
                   <View style={styles.feedMeta}>
                     {item.sources && item.sources.length > 0 && (
                       <View style={[styles.sourcesContainer, { marginRight: 10 }]}>
-                        {item.sources.slice(0, 3).map((src, idx) => (
+                        {item.sources.slice(0, 3).map((src, idx) => {
+                          const logoUrl = getSourceLogoByName(src.label || src.name || src.source) || src.iconUrl || src.logo;
+                          return (
                           <View key={idx} style={[styles.sourceAvatar, { zIndex: 3 - idx, marginLeft: idx === 0 ? 0 : -8 }]}>
-                            {src.iconUrl ? (
-                              <Image source={{ uri: src.iconUrl }} style={styles.avatarImage} />
+                            {logoUrl ? (
+                              <Image source={{ uri: logoUrl }} style={styles.avatarImage} />
                             ) : (
                               <View style={[styles.avatarImage, { backgroundColor: '#526075', alignItems: 'center', justifyContent: 'center' }]}>
                                 <Text style={{ color: '#fff', fontSize: 8, fontFamily: 'Inter_700Bold' }}>
@@ -791,7 +794,8 @@ export default function NewsScreen() {
                               </View>
                             )}
                           </View>
-                        ))}
+                          );
+                        })}
                         {item.sources.length > 3 && (
                           <Text style={styles.sourceText}>+{item.sources.length - 3}</Text>
                         )}

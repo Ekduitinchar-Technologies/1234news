@@ -95,6 +95,15 @@
           Spotlights
           <span class="nav-badge" id="badge-spotlights">0</span>
         </button>
+        <button class="nav-item" data-tab="aifetch" onclick="UI.switchTab('aifetch')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 1 0 10 10"/>
+            <path d="M22 2 12 12"/>
+            <path d="m18 2 4 4-4 4"/>
+          </svg>
+          AI Fetch
+          <span class="nav-badge af-badge" id="badge-aifetch">NEW</span>
+        </button>
       </nav>
 
       <div class="sidebar-footer">
@@ -239,6 +248,68 @@
         <div id="spotlightsList" class="items-list"></div>
       </div>
 
+      <!-- AI FETCH TAB -->
+      <div id="tab-aifetch" class="tab-pane hidden">
+        <div class="pane-header">
+          <div>
+            <h1>AI Fetch</h1>
+            <p class="pane-subtitle">Auto-fetch news from multiple sources, cluster by topic, and generate unbiased summaries</p>
+          </div>
+        </div>
+
+        <!-- Source Manager -->
+        <div class="af-section">
+          <div class="af-section-title">News Sources</div>
+          <div id="af-sources-list" class="af-sources-list"></div>
+          <div class="af-add-row">
+            <input type="text" id="af-add-name" placeholder="Source name (e.g. Reuters)" />
+            <input type="url"  id="af-add-url"  placeholder="RSS feed URL (https://…)" />
+            <button class="btn-ghost" onclick="AIFETCH.addCustom()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add
+            </button>
+          </div>
+        </div>
+
+        <!-- Pipeline Controls -->
+        <div class="af-section af-controls-section">
+          <div class="af-controls-row">
+            <div>
+              <div class="af-section-title" style="margin-bottom:10px">Freshness Window</div>
+              <div class="af-freshness-bar">
+                <button class="af-fresh-btn" data-hours="6"  onclick="AIFETCH.setFreshness(6,this)">6 h</button>
+                <button class="af-fresh-btn" data-hours="12" onclick="AIFETCH.setFreshness(12,this)">12 h</button>
+                <button class="af-fresh-btn active" data-hours="24" onclick="AIFETCH.setFreshness(24,this)">24 h</button>
+                <button class="af-fresh-btn" data-hours="48" onclick="AIFETCH.setFreshness(48,this)">48 h</button>
+                <button class="af-fresh-btn" data-hours="72" onclick="AIFETCH.setFreshness(72,this)">3 days</button>
+              </div>
+            </div>
+            <button class="af-run-btn" id="af-run-btn" onclick="AIFETCH.run()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              &#x26A1; Fetch &amp; Summarize
+            </button>
+          </div>
+
+          <!-- Progress -->
+          <div id="af-prog-wrap" class="af-prog-wrap hidden">
+            <div class="af-prog-track"><div id="af-prog-bar" class="af-prog-bar" style="width:0%"></div></div>
+            <div id="af-prog-label" class="af-prog-label">Starting…</div>
+          </div>
+
+          <!-- Log -->
+          <div id="af-log" class="af-log hidden"></div>
+        </div>
+
+        <!-- Results -->
+        <div class="af-section">
+          <div class="af-results-header">
+            <div class="af-section-title">Generated Articles</div>
+            <button class="btn-ghost af-clear-btn" onclick="AIFETCH.clearAll()" style="font-size:12px;padding:6px 12px;">Clear all</button>
+          </div>
+          <div id="af-results"></div>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -279,6 +350,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="aifetch.js?v=2"></script>
   <script src="app.js"></script>
 </body>
 </html>

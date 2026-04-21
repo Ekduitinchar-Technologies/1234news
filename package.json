@@ -7,7 +7,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "build": "cd android && gradlew assembleRelease"
+    "build": "cd android && gradlew assembleRelease",
+    "admin": "node admin-portal/server.js"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
