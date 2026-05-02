@@ -8,6 +8,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-goog
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ensureAnonymousAuth } from './src/services/firebaseService';
+import { LanguageProvider } from './src/context/LanguageContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,10 +36,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <View style={styles.root} onLayout={onLayoutRootView}>
-        <StatusBar style="dark" />
-        <AppNavigator />
-      </View>
+      <LanguageProvider>
+        <View style={styles.root} onLayout={onLayoutRootView}>
+          <StatusBar style="dark" />
+          <AppNavigator />
+        </View>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }

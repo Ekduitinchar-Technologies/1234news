@@ -19,6 +19,7 @@ import {
   getArticleById
 } from '../services/firebaseService';
 import { getSourceLogoByName } from '../data/sources';
+import { useLocalizedArticle, useLanguage } from '../context/LanguageContext';
 
 const categoryColors = {
   tech:          { bg: '#e2e8f0', text: '#334155' },
@@ -163,7 +164,10 @@ export default function ArticleDetailScreen({ route, navigation }) {
   const { article: initialArticle } = route.params;
   const insets = useSafeAreaInsets();
   
-  const [article,      setArticle]      = useState(initialArticle);
+  const [baseArticle,  setBaseArticle]  = useState(initialArticle);
+  const article = useLocalizedArticle(baseArticle);
+  const { t } = useLanguage();
+  
   const [fullLoading,  setFullLoading]  = useState(!initialArticle.fullBody);
   const catColor = categoryColors[article.category] || categoryColors.tech;
 
@@ -179,10 +183,10 @@ export default function ArticleDetailScreen({ route, navigation }) {
     logBehaviour(article, 'read');
     
     // If article is partial (no fullBody), fetch it
-    if (!article.fullBody) {
+    if (!baseArticle.fullBody) {
       setFullLoading(true);
       getArticleById(article.id).then(fullArt => {
-        if (fullArt) setArticle(fullArt);
+        if (fullArt) setBaseArticle(fullArt);
         setFullLoading(false);
       }).catch(() => setFullLoading(false));
     }
@@ -294,7 +298,7 @@ export default function ArticleDetailScreen({ route, navigation }) {
             {fullLoading ? (
               <View style={{ paddingVertical: 40, alignItems: 'center' }}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={{ marginTop: 10, color: '#94a3b8', fontSize: 13 }}>Loading full story...</Text>
+                <Text style={{ marginTop: 10, color: '#94a3b8', fontSize: 13 }}>{t('loadingStory')}</Text>
               </View>
             ) : (article.fullBody || article.body) ? (
               <Text style={s.body}>{article.fullBody || article.body}</Text>
@@ -307,7 +311,7 @@ export default function ArticleDetailScreen({ route, navigation }) {
             <View style={s.section}>
               <View style={s.sectionHeader}>
                 <MaterialIcons name="verified" size={16} color="#526075" />
-                <Text style={s.sectionTitle}>Sources</Text>
+                <Text style={s.sectionTitle}>{t('sources')}</Text>
               </View>
               {(article.sources || []).map((src, i) => {
                 const logoUrl = getSourceLogoByName(src.label || src.name || src.source) || src.iconUrl || src.logo;
@@ -325,7 +329,7 @@ export default function ArticleDetailScreen({ route, navigation }) {
                       <MaterialIcons name="open-in-new" size={14} color="#526075" />
                     )}
                   </View>
-                  <Text style={s.sourceLabel}>{src.label || src.name || src.source || 'Original Source'}</Text>
+                  <Text style={s.sourceLabel}>{src.label || src.name || src.source || t('originalSource')}</Text>
                   <MaterialIcons name="chevron-right" size={18} color="#cbd5e1" style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
                 );
@@ -346,11 +350,11 @@ export default function ArticleDetailScreen({ route, navigation }) {
               </View>
               <TouchableOpacity style={s.engageBtn} onPress={handleToggleSave} activeOpacity={0.8}>
                 <MaterialIcons name={isSaved ? "bookmark" : "bookmark-outline"} size={20} color={isSaved ? colors.primary : "#64748b"} />
-                <Text style={[s.engageCount, isSaved && { color: colors.primary }]}>{isSaved ? "Saved" : "Save"}</Text>
+                <Text style={[s.engageCount, isSaved && { color: colors.primary }]}>{isSaved ? t('saved') : t('save')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={s.engageBtn} onPress={handleShare} activeOpacity={0.8}>
                 <MaterialIcons name="share" size={20} color="#64748b" />
-                <Text style={s.engageCount}>Share</Text>
+                <Text style={s.engageCount}>{t('share')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -358,7 +362,7 @@ export default function ArticleDetailScreen({ route, navigation }) {
             <View style={s.section}>
               <View style={s.sectionHeader}>
                 <MaterialIcons name="forum" size={16} color="#526075" />
-                <Text style={s.sectionTitle}>Discussion</Text>
+                <Text style={s.sectionTitle}>{t('discussion')}</Text>
               </View>
 
               {/* Comment input */}
@@ -366,7 +370,7 @@ export default function ArticleDetailScreen({ route, navigation }) {
                 <Image source={{ uri: auth.currentUser && auth.currentUser.photoURL ? auth.currentUser.photoURL : 'https://picsum.photos/seed/me/100/100' }} style={s.userAvatar} />
                 <TextInput
                   style={s.commentInput}
-                  placeholder="Share your thoughts…"
+                  placeholder={t('shareThoughts')}
                   placeholderTextColor="#94a3b8"
                   value={commentText}
                   onChangeText={setCommentText}

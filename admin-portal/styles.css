@@ -900,6 +900,13 @@ a { color: inherit; text-decoration: none; }
 .af-fresh-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
 /* Run button */
+/* Run & Stop buttons group */
+.af-btns-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .af-run-btn {
   display: inline-flex;
   align-items: center;
@@ -1050,4 +1057,23 @@ a { color: inherit; text-decoration: none; }
   transition: all var(--transition);
 }
 .af-btn-disc:hover { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,0.25); }
+
+/* Stop button */
+.af-stop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.af-stop-btn:hover { background: var(--red); color: #fff; }
+.af-stop-btn:active { transform: translateY(1px); }
+
 

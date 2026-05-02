@@ -284,10 +284,16 @@
                 <button class="af-fresh-btn" data-hours="72" onclick="AIFETCH.setFreshness(72,this)">3 days</button>
               </div>
             </div>
-            <button class="af-run-btn" id="af-run-btn" onclick="AIFETCH.run()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              &#x26A1; Fetch &amp; Summarize
-            </button>
+            <div class="af-btns-group">
+              <button class="af-run-btn" id="af-run-btn" onclick="AIFETCH.run()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                ⚡ Fetch &amp; Summarize
+              </button>
+              <button class="af-stop-btn hidden" id="af-stop-btn" onclick="AIFETCH.stop()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="6" y="6" width="12" height="12"/></svg>
+                Stop
+              </button>
+            </div>
           </div>
 
           <!-- Progress -->

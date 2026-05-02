@@ -423,9 +423,15 @@ const ARTICLES = {
     const categories = ['Politics','Technology','Business','Science','Health','Sports','Entertainment','World','Environment','Culture'];
 
     const html = `
-      <div class="form-group">
-        <label>Title *</label>
-        <input type="text" id="f_title" placeholder="Article headline…" value="${article?.title || ''}" />
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label>Title (English) *</label>
+          <input type="text" id="f_title_en" placeholder="Article headline…" value="${article?.title_en || article?.title || ''}" />
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Title (Nepali)</label>
+          <input type="text" id="f_title_np" placeholder="Article headline in Nepali…" value="${article?.title_np || ''}" />
+        </div>
       </div>
 
       <div class="form-row">
@@ -457,23 +463,45 @@ const ARTICLES = {
 
       <div class="section-divider">Content</div>
 
-      <div class="form-group">
-        <label>Summary <small style="color:var(--text-3);font-weight:400">(≤ 69 words — shown on Home feed)</small></label>
-        <textarea id="f_summary" rows="4" placeholder="Short, punchy summary…"
-                  oninput="UI.updateWordCount('f_summary','sumBar','sumCount',1,69)">${article?.summary || ''}</textarea>
-        <div class="word-count-bar">
-          <div class="word-bar-track"><div class="word-bar-fill" id="sumBar" style="width:0%"></div></div>
-          <span class="word-count" id="sumCount">0 / 69 words</span>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label>Summary (EN) <small style="color:var(--text-3);font-weight:400">(≤ 69 words)</small></label>
+          <textarea id="f_summary_en" rows="4" placeholder="Short, punchy summary…"
+                    oninput="UI.updateWordCount('f_summary_en','sumBar_en','sumCount_en',1,69)">${article?.summary_en || article?.summary || ''}</textarea>
+          <div class="word-count-bar">
+            <div class="word-bar-track"><div class="word-bar-fill" id="sumBar_en" style="width:0%"></div></div>
+            <span class="word-count" id="sumCount_en">0 / 69 words</span>
+          </div>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Summary (NP)</label>
+          <textarea id="f_summary_np" rows="4" placeholder="Short, punchy summary in Nepali…"
+                    oninput="UI.updateWordCount('f_summary_np','sumBar_np','sumCount_np',1,69)">${article?.summary_np || ''}</textarea>
+          <div class="word-count-bar">
+            <div class="word-bar-track"><div class="word-bar-fill" id="sumBar_np" style="width:0%"></div></div>
+            <span class="word-count" id="sumCount_np">0 / 69 words</span>
+          </div>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Body <small style="color:var(--text-3);font-weight:400">(400–600 words — Article Detail)</small></label>
-        <textarea id="f_body" rows="12" placeholder="Full article body…"
-                  oninput="UI.updateWordCount('f_body','bodyBar','bodyCount',400,600)">${article?.body || ''}</textarea>
-        <div class="word-count-bar">
-          <div class="word-bar-track"><div class="word-bar-fill" id="bodyBar" style="width:0%"></div></div>
-          <span class="word-count" id="bodyCount">0 / 600 words</span>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label>Body (EN) <small style="color:var(--text-3);font-weight:400">(400–600 words)</small></label>
+          <textarea id="f_body_en" rows="12" placeholder="Full article body…"
+                    oninput="UI.updateWordCount('f_body_en','bodyBar_en','bodyCount_en',400,600)">${article?.body_en || article?.body || article?.fullBody || ''}</textarea>
+          <div class="word-count-bar">
+            <div class="word-bar-track"><div class="word-bar-fill" id="bodyBar_en" style="width:0%"></div></div>
+            <span class="word-count" id="bodyCount_en">0 / 600 words</span>
+          </div>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Body (NP)</label>
+          <textarea id="f_body_np" rows="12" placeholder="Full article body in Nepali…"
+                    oninput="UI.updateWordCount('f_body_np','bodyBar_np','bodyCount_np',400,600)">${article?.body_np || ''}</textarea>
+          <div class="word-count-bar">
+            <div class="word-bar-track"><div class="word-bar-fill" id="bodyBar_np" style="width:0%"></div></div>
+            <span class="word-count" id="bodyCount_np">0 / 600 words</span>
+          </div>
         </div>
       </div>
 
@@ -506,27 +534,36 @@ const ARTICLES = {
 
     // Populate word counts + sources after DOM update
     setTimeout(() => {
-      UI.updateWordCount('f_summary','sumBar','sumCount',1,69);
-      UI.updateWordCount('f_body','bodyBar','bodyCount',400,600);
+      UI.updateWordCount('f_summary_en','sumBar_en','sumCount_en',1,69);
+      UI.updateWordCount('f_summary_np','sumBar_np','sumCount_np',1,69);
+      UI.updateWordCount('f_body_en','bodyBar_en','bodyCount_en',400,600);
+      UI.updateWordCount('f_body_np','bodyBar_np','bodyCount_np',400,600);
       UI.renderSources();
     }, 10);
   },
 
   save: async () => {
     const btn   = document.getElementById('drawerSaveBtn');
-    const title = UI.val('f_title');
-    if (!title) { UI.showToast('Title is required', 'error'); return; }
+    const title_en = UI.val('f_title_en');
+    const title_np = UI.val('f_title_np');
+    if (!title_en && !title_np) { UI.showToast('At least one Title is required', 'error'); return; }
 
     btn.textContent = 'Saving…';
     btn.disabled = true;
 
     try {
       const payload = {
-        title,
+        title:         title_en || title_np, // Legacy fallback
+        title_en,
+        title_np,
         categoryLabel: UI.val('f_category'),
         imageUrl:      UI.val('f_imageUrl'),
-        summary:       UI.val('f_summary'),
-        body:          UI.val('f_body'),
+        summary:       UI.val('f_summary_en') || UI.val('f_summary_np'), // Legacy fallback
+        summary_en:    UI.val('f_summary_en'),
+        summary_np:    UI.val('f_summary_np'),
+        body:          UI.val('f_body_en') || UI.val('f_body_np'), // Legacy fallback
+        body_en:       UI.val('f_body_en'),
+        body_np:       UI.val('f_body_np'),
         sources:       state.sources.filter(s => s.name),
         tags:          state.tags,
         isPublished:   UI.chk('f_published'),

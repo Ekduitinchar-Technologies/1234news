@@ -27,17 +27,9 @@ import {
 } from '../services/firebaseService';
 import { timeAgo } from '../utils/timeUtils';
 import { getSourceLogoByName } from '../data/sources';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-
-const MARKET_TICKERS = [
-  { symbol: 'S&P 500', value: '5,088.80', change: '+0.03%' },
-  { symbol: 'NASDAQ', value: '15,996.82', change: '-0.28%' },
-  { symbol: 'BTC', value: '$51,432', change: '+1.2%' },
-  { symbol: 'GOOG', value: '$144.34', change: '-0.15%' },
-  { symbol: 'AAPL', value: '$182.52', change: '+0.4%' },
-  { symbol: 'TSLA', value: '$191.97', change: '-1.4%' },
-];
 
 // ─────────────────────────────────────────────────────────────────
 // TickerBar — auto-scrolls; touch pauses
@@ -45,10 +37,79 @@ const MARKET_TICKERS = [
 function TickerBar() {
   const scrollRef = useRef(null);
   const offsetRef = useRef(0);
-  const isPaused  = useRef(false);
-  const ITEM_W    = 148;
-  const TOTAL_W   = MARKET_TICKERS.length * ITEM_W;
-  const display   = [...MARKET_TICKERS, ...MARKET_TICKERS];
+  const isPaused = useRef(false);
+  const ITEM_W = 148;
+
+  const [tickers, setTickers] = useState([
+    { label: 'NEPSE', value: '2,015.42', change: '+0.15%', up: true },
+    { label: 'GOLD', value: 'रु 118,500', change: '+0.4%', up: true },
+    { label: 'SILVER', value: 'रु 1,425', change: '-0.2%', up: false },
+    { label: 'USD/NPR', value: 'रु 133.50', change: '+0.0%', up: true },
+    { label: 'BTC', value: '$64,200', change: '+1.2%', up: true }
+  ]);
+
+  useEffect(() => {
+    async function fetchRealValues() {
+      // ── Strategy 1: Vercel cloud proxy (live FENEGOSIDA gold/silver — always on) ──────
+      try {
+        const proxyRes = await fetch('https://news69-ticker-api.vercel.app/api/tickers', { signal: AbortSignal.timeout(8000) });
+        if (proxyRes.ok) {
+          const { tickers: proxiedTickers } = await proxyRes.json();
+          if (Array.isArray(proxiedTickers) && proxiedTickers.length > 0) {
+            setTickers(proxiedTickers);
+            console.log('[Ticker] Using Vercel proxy (FENEGOSIDA live)');
+            return; // ✅ done — no need for fallback
+          }
+        }
+      } catch (_) {
+        console.log('[Ticker] Vercel proxy unavailable — falling back to direct APIs');
+      }
+
+      // ── Strategy 2: direct public APIs (works without the proxy server) ──────────────
+      try {
+        const exRes = await fetch('https://open.er-api.com/v6/latest/USD');
+        const exData = await exRes.json();
+        const nprRate = exData.rates.NPR || 133.50;
+
+        const [btcRes, paxgRes] = await Promise.all([
+          fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'),
+          fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT'),
+        ]);
+        const btcData  = await btcRes.json();
+        const paxgData = await paxgRes.json();
+
+        const btcPrice    = parseFloat(btcData.lastPrice);
+        const btcChangeVal = parseFloat(btcData.priceChangePercent);
+
+        const paxgPriceUsd     = parseFloat(paxgData.lastPrice);
+        const goldPrice10gNpr  = (paxgPriceUsd / 31.1034768) * 10 * nprRate;
+        const silverPrice10gNpr = goldPrice10gNpr / 85;
+        const goldChangeVal    = parseFloat(paxgData.priceChangePercent);
+
+        const fmt = (v, decimals = 0) => v.toLocaleString('en-IN', { maximumFractionDigits: decimals });
+        const sign = (v) => v >= 0 ? '+' : '';
+
+        setTickers(prev => [
+          prev[0], // keep NEPSE static placeholder
+          { label: 'GOLD',    value: 'रु ' + fmt(goldPrice10gNpr),   change: sign(goldChangeVal) + goldChangeVal.toFixed(2) + '%', up: goldChangeVal >= 0 },
+          { label: 'SILVER',  value: 'रु ' + fmt(silverPrice10gNpr), change: sign(goldChangeVal) + goldChangeVal.toFixed(2) + '%', up: goldChangeVal >= 0 },
+          { label: 'USD/NPR', value: 'रु ' + nprRate.toFixed(2),     change: '+0.0%',                                              up: true },
+          { label: 'BTC',     value: '$'   + btcPrice.toLocaleString('en-US', { maximumFractionDigits: 0 }), change: sign(btcChangeVal) + btcChangeVal.toFixed(2) + '%', up: btcChangeVal >= 0 },
+        ]);
+        console.log('[Ticker] Using direct API fallback (PAXG-derived gold)');
+      } catch (err) {
+        console.log('[Ticker] All fetch strategies failed:', err.message);
+      }
+    }
+
+    fetchRealValues();
+    // Refresh every 10 minutes
+    const interval = setInterval(fetchRealValues, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const TOTAL_W = tickers.length * ITEM_W;
+  const display = [...tickers, ...tickers];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -58,7 +119,7 @@ function TickerBar() {
       scrollRef.current.scrollTo({ x: offsetRef.current, animated: false });
     }, 16);
     return () => clearInterval(timer);
-  }, []);
+  }, [TOTAL_W]);
 
   return (
     <ScrollView
@@ -121,7 +182,7 @@ function SinglePoll({ poll }) {
       <Text style={styles.pollQuestion}>{poll.question}</Text>
       <View style={styles.pollOptions}>
         {options.map((opt, idx) => {
-          const pct      = totalVotes > 0 ? Math.round(((opt.votes || 0) / totalVotes) * 100) : 0;
+          const pct = totalVotes > 0 ? Math.round(((opt.votes || 0) / totalVotes) * 100) : 0;
           const isChosen = votedIdx === idx;
           const hasVoted = votedIdx !== null;
           return (
@@ -214,7 +275,7 @@ function ContentGalleryModal({ item, visible, onClose }) {
   const { width, height } = Dimensions.get('window');
   const insets = useSafeAreaInsets();
   const urls = item?.contentImageUrls || [];
-  
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [imageHeights, setImageHeights] = useState({});
   const scrollRef = useRef(null);
@@ -222,7 +283,7 @@ function ContentGalleryModal({ item, visible, onClose }) {
   const handleShare = async (url) => {
     try {
       await Share.share({ message: item?.title || '', url });
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const goLeft = () => {
@@ -271,12 +332,12 @@ function ContentGalleryModal({ item, visible, onClose }) {
               {urls.map((url, i) => {
                 return (
                   <View key={i} style={{ width, height }}>
-                    <Image 
-                      source={{ uri: url }} 
-                      style={{ width, height }} 
+                    <Image
+                      source={{ uri: url }}
+                      style={{ width, height }}
                       resizeMode="cover"
                     />
-                    
+
                     {/* Share button bottom-right per image */}
                     <TouchableOpacity
                       onPress={() => handleShare(url)}
@@ -412,7 +473,7 @@ function SpotlightInterview({ spotlight }) {
 // CommentRow — single comment with like + reply
 // ─────────────────────────────────────────────────────────────────
 function CommentRow({ threadId, comment, isReply, onReply }) {
-  const [liked,     setLiked]     = useState(false);
+  const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(comment.likes ?? 0);
 
   useEffect(() => {
@@ -472,9 +533,9 @@ function CommentRow({ threadId, comment, isReply, onReply }) {
 // ─────────────────────────────────────────────────────────────────
 function DiscussionModal({ thread, visible, onClose }) {
   const insets = useSafeAreaInsets();
-  const [allComments,  setAllComments]  = useState([]);
-  const [newText,      setNewText]      = useState('');
-  const [replyingTo,   setReplyingTo]   = useState(null); // comment object
+  const [allComments, setAllComments] = useState([]);
+  const [newText, setNewText] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null); // comment object
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -513,15 +574,15 @@ function DiscussionModal({ thread, visible, onClose }) {
     <View>
       <CommentRow threadId={thread.id} comment={item} isReply={false} onReply={handleReply} />
       {(item.replies ?? []).map((reply) => (
-        <CommentRow key={reply.id} threadId={thread.id} comment={reply} isReply onReply={() => {}} />
+        <CommentRow key={reply.id} threadId={thread.id} comment={reply} isReply onReply={() => { }} />
       ))}
     </View>
   );
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
@@ -551,7 +612,7 @@ function DiscussionModal({ thread, visible, onClose }) {
             renderItem={renderComment}
             contentContainerStyle={styles.commentsList}
             showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled" 
+            keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
               <Text style={styles.emptyComments}>Be the first to comment!</Text>
             }
@@ -683,8 +744,9 @@ export default function NewsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [activeCategory, setActiveCategory] = useState('All News');
-  const [searchText, setSearchText]         = useState('');
-  
+  const [searchText, setSearchText] = useState('');
+  const [visibleCount, setVisibleCount] = useState(6);
+
   const [dbArticles, setDbArticles] = useState([]);
   const [dbTrending, setDbTrending] = useState([]);
   const [dbExplainers, setDbExplainers] = useState([]);
@@ -699,17 +761,41 @@ export default function NewsScreen() {
     getSpotlights().then(setDbSpotlights);
   }, []);
 
-  const baseArticles = activeCategory === 'All News' 
-    ? dbArticles 
-    : dbArticles.filter(a => a.categoryLabel === activeCategory);
-    
+  const { language, t } = useLanguage();
+  const isNepali = language?.includes('Nepali');
+
+  // Localize baseArticles so the feed shows the correct language title
+  const localizedDbArticles = useMemo(() => dbArticles.map(a => ({
+    ...a,
+    title: isNepali ? (a.title_np || a.title) : (a.title_en || a.title),
+    summary: isNepali ? (a.summary_np || a.summary) : (a.summary_en || a.summary),
+    body: isNepali ? (a.body_np || a.body) : (a.body_en || a.body),
+  })), [dbArticles, isNepali]);
+
+  const baseArticles = activeCategory === 'All News'
+    ? localizedDbArticles
+    : localizedDbArticles.filter(a => a.categoryLabel === activeCategory);
+
   const filteredArticles = searchText.trim()
     ? baseArticles.filter(
-        (n) =>
-          (n.title || '').toLowerCase().includes(searchText.toLowerCase()) ||
-          (n.tag || '').toLowerCase().includes(searchText.toLowerCase())
-      )
+      (n) =>
+        (n.title || '').toLowerCase().includes(searchText.toLowerCase()) ||
+        (n.tag || '').toLowerCase().includes(searchText.toLowerCase())
+    )
     : baseArticles;
+
+  // Reset visible count when category or search changes
+  const prevCategoryRef = React.useRef(activeCategory);
+  const prevSearchRef = React.useRef(searchText);
+  if (prevCategoryRef.current !== activeCategory || prevSearchRef.current !== searchText) {
+    prevCategoryRef.current = activeCategory;
+    prevSearchRef.current = searchText;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    Promise.resolve().then(() => setVisibleCount(6));
+  }
+
+  const visibleArticles = filteredArticles.slice(0, visibleCount);
+  const hasMore = filteredArticles.length > visibleCount;
 
   const filteredExplainers = dbExplainers.filter(
     (e) => activeCategory === 'All News' || activeCategory === 'For You' || e.category === activeCategory
@@ -733,7 +819,7 @@ export default function NewsScreen() {
           <MaterialIcons name="search" size={24} color="#747c80" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Explore current events..."
+            placeholder={t('askAnything')}
             placeholderTextColor="#747c80"
             value={searchText}
             onChangeText={setSearchText}
@@ -768,10 +854,10 @@ export default function NewsScreen() {
           {filteredArticles.length === 0 ? (
             <View style={styles.emptyState}>
               <MaterialIcons name="search-off" size={48} color="#c4cbd0" />
-              <Text style={styles.emptyStateText}>No articles found</Text>
+              <Text style={styles.emptyStateText}>{t('noSavedArticles').split('\n')[0]}</Text>
             </View>
           ) : (
-            filteredArticles.map((item) => (
+            visibleArticles.map((item) => (
               <TouchableOpacity key={item.id} style={styles.feedItem} activeOpacity={0.85} onPress={() => navigation.navigate('ArticleDetail', { article: item })}>
                 <Image source={{ uri: item.imageUrl || item.img }} style={styles.feedImage} />
                 <View style={styles.feedContent}>
@@ -783,17 +869,17 @@ export default function NewsScreen() {
                         {item.sources.slice(0, 3).map((src, idx) => {
                           const logoUrl = getSourceLogoByName(src.label || src.name || src.source) || src.iconUrl || src.logo;
                           return (
-                          <View key={idx} style={[styles.sourceAvatar, { zIndex: 3 - idx, marginLeft: idx === 0 ? 0 : -8 }]}>
-                            {logoUrl ? (
-                              <Image source={{ uri: logoUrl }} style={styles.avatarImage} />
-                            ) : (
-                              <View style={[styles.avatarImage, { backgroundColor: '#526075', alignItems: 'center', justifyContent: 'center' }]}>
-                                <Text style={{ color: '#fff', fontSize: 8, fontFamily: 'Inter_700Bold' }}>
-                                  {(src.label || src.name || src.source || 'L')[0].toUpperCase()}
-                                </Text>
-                              </View>
-                            )}
-                          </View>
+                            <View key={idx} style={[styles.sourceAvatar, { zIndex: 3 - idx, marginLeft: idx === 0 ? 0 : -8 }]}>
+                              {logoUrl ? (
+                                <Image source={{ uri: logoUrl }} style={styles.avatarImage} />
+                              ) : (
+                                <View style={[styles.avatarImage, { backgroundColor: '#526075', alignItems: 'center', justifyContent: 'center' }]}>
+                                  <Text style={{ color: '#fff', fontSize: 8, fontFamily: 'Inter_700Bold' }}>
+                                    {(src.label || src.name || src.source || 'L')[0].toUpperCase()}
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
                           );
                         })}
                         {item.sources.length > 3 && (
@@ -816,6 +902,20 @@ export default function NewsScreen() {
               </TouchableOpacity>
             ))
           )}
+
+          {/* Load More button */}
+          {hasMore && (
+            <TouchableOpacity
+              style={styles.loadMoreBtn}
+              onPress={() => setVisibleCount(c => c + 6)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.loadMoreText}>
+                {t('viewAll')} · {filteredArticles.length - visibleCount} remaining
+              </Text>
+              <MaterialIcons name="expand-more" size={18} color="#526075" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Polls Carousel (moved above explainers) */}
@@ -824,13 +924,13 @@ export default function NewsScreen() {
         {/* Trending Cards */}
         {dbTrending.length > 0 && (
           <View style={styles.carouselSection}>
-            <Text style={styles.sectionTitle}>Trending Topics</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
+            <Text style={styles.sectionTitle}>{t('trendingTopics')}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
               decelerationRate="fast"
               snapToInterval={170} // cardW (160) + marginRight (10)
-              style={{ marginHorizontal: -16 }} 
+              style={{ marginHorizontal: -16 }}
               contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, gap: 10 }}
             >
               {dbTrending.map((item) => (
@@ -846,7 +946,7 @@ export default function NewsScreen() {
         {filteredExplainers.length > 0 && (
           <View style={styles.topStoriesSection}>
             <View style={styles.topStoriesHeaderRow}>
-              <Text style={styles.sectionTitle}>EXPLAINERS</Text>
+              <Text style={styles.sectionTitle}>{t('explainers').toUpperCase()}</Text>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16 }}>
               {filteredExplainers.map((item) => (
@@ -869,105 +969,107 @@ export default function NewsScreen() {
 // STYLES
 // ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: '#f7f9fb' },
-  
-  scrollContent:{ paddingHorizontal: 16 },
+  container: { flex: 1, backgroundColor: '#f7f9fb' },
+
+  scrollContent: { paddingHorizontal: 16 },
 
   // Ticker
   tickerContainer: { backgroundColor: '#0f172a', borderRadius: 8, overflow: 'hidden', paddingVertical: 10, marginBottom: 24 },
-  tickerScroll:    { paddingHorizontal: 16, gap: 32, flexDirection: 'row', alignItems: 'center' },
-  tickerItem:      { flexDirection: 'row', alignItems: 'center', gap: 8, width: 148 },
-  tickerLabel:     { fontFamily: 'Manrope_700Bold', fontSize: 10, color: '#94a3b8' },
-  tickerValue:     { fontFamily: 'Manrope_700Bold', fontSize: 14, color: '#ffffff' },
-  tickerUp:        { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#34d399' },
-  tickerDown:      { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#fb7185' },
+  tickerScroll: { paddingHorizontal: 16, gap: 32, flexDirection: 'row', alignItems: 'center' },
+  tickerItem: { flexDirection: 'row', alignItems: 'center', gap: 8, width: 148 },
+  tickerLabel: { fontFamily: 'Manrope_700Bold', fontSize: 10, color: '#94a3b8' },
+  tickerValue: { fontFamily: 'Manrope_700Bold', fontSize: 14, color: '#ffffff' },
+  tickerUp: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#34d399' },
+  tickerDown: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#fb7185' },
 
   // Search
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e3e9ed', borderRadius: 12, paddingHorizontal: 16, height: 56, marginBottom: 24 },
-  searchIcon:      { marginRight: 12 },
-  searchInput:     { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 16, color: '#2c3437' },
+  searchIcon: { marginRight: 12 },
+  searchInput: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 16, color: '#2c3437' },
 
   // Categories
-  categoriesScroll:         { gap: 12, paddingRight: 32, marginBottom: 32 },
-  categoryChipActive:       { backgroundColor: '#d5e3fd', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
-  categoryChipTextActive:   { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: '#455367' },
-  categoryChipInactive:     { backgroundColor: '#f0f4f7', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  categoriesScroll: { gap: 12, paddingRight: 32, marginBottom: 32 },
+  categoryChipActive: { backgroundColor: '#d5e3fd', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  categoryChipTextActive: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: '#455367' },
+  categoryChipInactive: { backgroundColor: '#f0f4f7', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
   categoryChipTextInactive: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: '#596064' },
 
   // Feed
   sectionContainer: { marginBottom: 32 },
-  feedItem:         { flexDirection: 'row', gap: 16, marginBottom: 24 },
-  feedImage:        { width: 96, height: 96, borderRadius: 8, backgroundColor: '#e3e9ed' },
-  feedContent:      { flex: 1, justifyContent: 'center' },
-  feedTag:          { fontFamily: 'Manrope_700Bold', fontSize: 10, color: '#526075', letterSpacing: 1.5, marginBottom: 4 },
-  feedTitle:        { fontFamily: 'Manrope_700Bold', fontSize: 15, color: '#2c3437', lineHeight: 20, marginBottom: 6 },
-  feedMeta:         { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  feedMetaItem:     { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  feedMetaText:     { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#747c80' },
+  feedItem: { flexDirection: 'row', gap: 16, marginBottom: 24 },
+  feedImage: { width: 96, height: 96, borderRadius: 8, backgroundColor: '#e3e9ed' },
+  feedContent: { flex: 1, justifyContent: 'center' },
+  feedTag: { fontFamily: 'Manrope_700Bold', fontSize: 10, color: '#526075', letterSpacing: 1.5, marginBottom: 4 },
+  feedTitle: { fontFamily: 'Manrope_700Bold', fontSize: 15, color: '#2c3437', lineHeight: 20, marginBottom: 6 },
+  feedMeta: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  feedMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  feedMetaText: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#747c80' },
 
   sourcesContainer: { flexDirection: 'row', alignItems: 'center' },
   sourceAvatar: { width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: '#fff', backgroundColor: '#fff', overflow: 'hidden' },
   avatarImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   sourceText: { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#526075', marginLeft: 6 },
-  emptyState:       { alignItems: 'center', paddingVertical: 40, gap: 8 },
-  emptyStateText:   { fontFamily: 'Inter_500Medium', fontSize: 16, color: '#c4cbd0' },
+  emptyState: { alignItems: 'center', paddingVertical: 40, gap: 8 },
+  emptyStateText: { fontFamily: 'Inter_500Medium', fontSize: 16, color: '#c4cbd0' },
+  loadMoreBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, borderWidth: 1.5, borderColor: '#d0dae3', backgroundColor: '#f0f4f7', marginTop: 4, marginBottom: 8 },
+  loadMoreText: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: '#526075' },
 
   // Carousel
-  carouselSection:   { marginBottom: 40 },
-  carouselScroll:    { gap: 16, paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 },
-  carouselCard:      { width: 140, backgroundColor: '#ffffff', borderRadius: 12, shadowColor: '#2c3437', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.12, shadowRadius: 24, elevation: 8 },
-  carouselImage:     { width: '100%', aspectRatio: 4 / 5, borderRadius: 12 },
-  carouselContent:   { padding: 12 },
-  carouselBadge:     { backgroundColor: '#d4e4f6', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 4, alignSelf: 'flex-start', marginBottom: 8 },
+  carouselSection: { marginBottom: 40 },
+  carouselScroll: { gap: 16, paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 },
+  carouselCard: { width: 140, backgroundColor: '#ffffff', borderRadius: 12, shadowColor: '#2c3437', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.12, shadowRadius: 24, elevation: 8 },
+  carouselImage: { width: '100%', aspectRatio: 4 / 5, borderRadius: 12 },
+  carouselContent: { padding: 12 },
+  carouselBadge: { backgroundColor: '#d4e4f6', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 4, alignSelf: 'flex-start', marginBottom: 8 },
   carouselBadgeText: { fontFamily: 'Manrope_700Bold', fontSize: 8, color: '#445362', letterSpacing: 1 },
-  carouselTitle:     { fontFamily: 'Manrope_700Bold', fontSize: 13, color: '#2c3437', lineHeight: 18 },
+  carouselTitle: { fontFamily: 'Manrope_700Bold', fontSize: 13, color: '#2c3437', lineHeight: 18 },
 
   // Top Story
-  topStoriesSection:   { marginBottom: 40 },
+  topStoriesSection: { marginBottom: 40 },
   topStoriesHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  topStoriesDate:      { fontFamily: 'Manrope_700Bold', fontSize: 12, color: '#526075' },
-  topStoryCard:        { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden' },
-  topStoryContent:     { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24 },
-  exclusiveBadge:      { backgroundColor: '#526075', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 4, alignSelf: 'flex-start', marginBottom: 12 },
-  exclusiveBadgeText:  { fontFamily: 'Inter_700Bold', fontSize: 10, color: '#f8f8ff', letterSpacing: 1.5 },
-  topStoryTitle:       { fontFamily: 'Manrope_800ExtraBold', fontSize: 24, color: '#ffffff', lineHeight: 30, marginBottom: 12 },
-  topStoryDesc:        { fontFamily: 'Inter_400Regular', fontSize: 14, color: 'rgba(255,255,255,0.8)', lineHeight: 20 },
+  topStoriesDate: { fontFamily: 'Manrope_700Bold', fontSize: 12, color: '#526075' },
+  topStoryCard: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden' },
+  topStoryContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24 },
+  exclusiveBadge: { backgroundColor: '#526075', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 4, alignSelf: 'flex-start', marginBottom: 12 },
+  exclusiveBadgeText: { fontFamily: 'Inter_700Bold', fontSize: 10, color: '#f8f8ff', letterSpacing: 1.5 },
+  topStoryTitle: { fontFamily: 'Manrope_800ExtraBold', fontSize: 24, color: '#ffffff', lineHeight: 30, marginBottom: 12 },
+  topStoryDesc: { fontFamily: 'Inter_400Regular', fontSize: 14, color: 'rgba(255,255,255,0.8)', lineHeight: 20 },
 
   // Interview
-  interviewSection:   { backgroundColor: '#eef2ff', borderRadius: 16, padding: 32, alignItems: 'center', marginBottom: 40, borderWidth: 1, borderColor: '#e0e7ff' },
-  quoteIcon:          { position: 'absolute', top: 16, left: 16 },
-  interviewBadge:     { backgroundColor: 'rgba(79,70,229,0.1)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginBottom: 24 },
+  interviewSection: { backgroundColor: '#eef2ff', borderRadius: 16, padding: 32, alignItems: 'center', marginBottom: 40, borderWidth: 1, borderColor: '#e0e7ff' },
+  quoteIcon: { position: 'absolute', top: 16, left: 16 },
+  interviewBadge: { backgroundColor: 'rgba(79,70,229,0.1)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginBottom: 24 },
   interviewBadgeText: { fontFamily: 'Manrope_700Bold', fontSize: 10, color: '#4f46e5', letterSpacing: 2 },
-  interviewQuote:     { fontFamily: 'Manrope_400Regular', fontSize: 22, fontStyle: 'italic', color: '#1e293b', textAlign: 'center', lineHeight: 32, marginBottom: 24 },
-  interviewProfile:   { flexDirection: 'row', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'center' },
-  interviewAvatar:    { width: 64, height: 64, borderRadius: 32, borderWidth: 4, borderColor: '#ffffff' },
-  interviewName:      { fontFamily: 'Manrope_800ExtraBold', fontSize: 14, color: '#0f172a', marginBottom: 2 },
-  interviewTitle:     { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: 1, opacity: 0.8 },
+  interviewQuote: { fontFamily: 'Manrope_400Regular', fontSize: 22, fontStyle: 'italic', color: '#1e293b', textAlign: 'center', lineHeight: 32, marginBottom: 24 },
+  interviewProfile: { flexDirection: 'row', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'center' },
+  interviewAvatar: { width: 64, height: 64, borderRadius: 32, borderWidth: 4, borderColor: '#ffffff' },
+  interviewName: { fontFamily: 'Manrope_800ExtraBold', fontSize: 14, color: '#0f172a', marginBottom: 2 },
+  interviewTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: 1, opacity: 0.8 },
 
   // Polls section
-  pollsSection:      { backgroundColor: '#f0f4f7', borderRadius: 12, marginBottom: 40, overflow: 'hidden' },
-  pollHeaderRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
-  pollHeaderTitle:   { fontFamily: 'Manrope_800ExtraBold', fontSize: 18, color: '#2c3437', flex: 1 },
+  pollsSection: { backgroundColor: '#f0f4f7', borderRadius: 12, marginBottom: 40, overflow: 'hidden' },
+  pollHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
+  pollHeaderTitle: { fontFamily: 'Manrope_800ExtraBold', fontSize: 18, color: '#2c3437', flex: 1 },
   pollPageIndicator: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#747c80' },
 
   // Single poll page
-  pollPage:          { paddingHorizontal: 20, paddingBottom: 20 },
-  pollTopRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  pollPage: { paddingHorizontal: 20, paddingBottom: 20 },
+  pollTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   pollCategoryBadge: { backgroundColor: 'rgba(82,96,117,0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  pollCategoryText:  { fontFamily: 'Manrope_700Bold', fontSize: 11, color: '#526075', letterSpacing: 0.5 },
-  pollTotal:         { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#747c80' },
-  pollQuestion:      { fontFamily: 'Manrope_600SemiBold', fontSize: 16, color: '#2c3437', lineHeight: 22, marginBottom: 16 },
-  pollOptions:       { gap: 10 },
-  pollOptionBtn:     { backgroundColor: '#ffffff', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden', position: 'relative' },
+  pollCategoryText: { fontFamily: 'Manrope_700Bold', fontSize: 11, color: '#526075', letterSpacing: 0.5 },
+  pollTotal: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#747c80' },
+  pollQuestion: { fontFamily: 'Manrope_600SemiBold', fontSize: 16, color: '#2c3437', lineHeight: 22, marginBottom: 16 },
+  pollOptions: { gap: 10 },
+  pollOptionBtn: { backgroundColor: '#ffffff', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden', position: 'relative' },
   pollOptionBtnChosen: { borderWidth: 2, borderColor: '#526075' },
-  pollBarFill:       { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 8 },
-  pollOptionText:    { fontFamily: 'Inter_500Medium', fontSize: 14, color: '#2c3437', zIndex: 1 },
-  pollPctText:       { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#526075', zIndex: 1 },
-  pollHint:          { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#94a3b8', textAlign: 'center', marginTop: 16 },
+  pollBarFill: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 8 },
+  pollOptionText: { fontFamily: 'Inter_500Medium', fontSize: 14, color: '#2c3437', zIndex: 1 },
+  pollPctText: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#526075', zIndex: 1 },
+  pollHint: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#94a3b8', textAlign: 'center', marginTop: 16 },
 
   // Poll dots
-  pollDots:      { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingBottom: 16 },
-  pollDot:       { width: 6, height: 6, borderRadius: 3, backgroundColor: '#c4cbd0' },
+  pollDots: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingBottom: 16 },
+  pollDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#c4cbd0' },
   pollDotActive: { width: 20, backgroundColor: '#526075' },
 
   // Section title
@@ -975,60 +1077,60 @@ const styles = StyleSheet.create({
 
   // Discussion section
   discussionSection: { marginBottom: 40 },
-  discList:          { gap: 16 },
+  discList: { gap: 16 },
 
   // Discussion preview card
-  discPreviewCard:   { backgroundColor: '#ffffff', borderRadius: 14, padding: 20, shadowColor: '#2c3437', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 3 },
+  discPreviewCard: { backgroundColor: '#ffffff', borderRadius: 14, padding: 20, shadowColor: '#2c3437', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 3 },
   discPreviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  discMetaText:      { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#747c80' },
-  discPreviewTitle:  { fontFamily: 'Manrope_700Bold', fontSize: 16, color: '#2c3437', lineHeight: 22, marginBottom: 14 },
+  discMetaText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#747c80' },
+  discPreviewTitle: { fontFamily: 'Manrope_700Bold', fontSize: 16, color: '#2c3437', lineHeight: 22, marginBottom: 14 },
   topCommentPreview: { flexDirection: 'row', gap: 12, backgroundColor: '#f7f9fb', borderRadius: 10, padding: 12, marginBottom: 12 },
-  topCommentAvatar:  { width: 32, height: 32, borderRadius: 16, backgroundColor: '#d5e3fd', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  topCommentInitials:{ fontFamily: 'Manrope_700Bold', fontSize: 12, color: '#455367' },
-  topCommentName:    { fontFamily: 'Manrope_700Bold', fontSize: 12, color: '#2c3437', marginBottom: 2 },
-  topCommentText:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#596064', lineHeight: 18 },
+  topCommentAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#d5e3fd', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  topCommentInitials: { fontFamily: 'Manrope_700Bold', fontSize: 12, color: '#455367' },
+  topCommentName: { fontFamily: 'Manrope_700Bold', fontSize: 12, color: '#2c3437', marginBottom: 2 },
+  topCommentText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#596064', lineHeight: 18 },
   discPreviewFooter: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f0f4f7', paddingTop: 12 },
-  discActionBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, marginRight: 16 },
-  discActionText:    { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#747c80' },
-  discViewAll:       { fontFamily: 'Manrope_600SemiBold', fontSize: 13, color: '#526075', marginLeft: 'auto' },
+  discActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginRight: 16 },
+  discActionText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#747c80' },
+  discViewAll: { fontFamily: 'Manrope_600SemiBold', fontSize: 13, color: '#526075', marginLeft: 'auto' },
 
   // Category badge
-  categoryBadge:     { backgroundColor: '#d4e4f6', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  categoryBadge: { backgroundColor: '#d4e4f6', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   categoryBadgeText: { fontFamily: 'Manrope_700Bold', fontSize: 10, color: '#445362', letterSpacing: 0.8 },
 
   // Discussion Modal
-  modalContainer:   { flex: 1, backgroundColor: '#f7f9fb' },
-  modalHeader:      { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#f0f4f7' },
-  modalCloseBtn:    { marginTop: 2, flexShrink: 0 },
-  modalHeaderText:  { flex: 1 },
-  modalTitle:       { fontFamily: 'Manrope_800ExtraBold', fontSize: 18, color: '#2c3437', lineHeight: 24, marginBottom: 8 },
-  modalMetaRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  modalMeta:        { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#747c80' },
-  commentsList:     { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20, gap: 8 },
-  emptyComments:    { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#94a3b8', textAlign: 'center', paddingVertical: 40 },
+  modalContainer: { flex: 1, backgroundColor: '#f7f9fb' },
+  modalHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#f0f4f7' },
+  modalCloseBtn: { marginTop: 2, flexShrink: 0 },
+  modalHeaderText: { flex: 1 },
+  modalTitle: { fontFamily: 'Manrope_800ExtraBold', fontSize: 18, color: '#2c3437', lineHeight: 24, marginBottom: 8 },
+  modalMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  modalMeta: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#747c80' },
+  commentsList: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20, gap: 8 },
+  emptyComments: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#94a3b8', textAlign: 'center', paddingVertical: 40 },
 
   // Comment rows
-  commentRow:       { flexDirection: 'row', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f4f7' },
-  commentRowReply:  { marginLeft: 32, paddingLeft: 12, borderLeftWidth: 0 },
-  replyLine:        { position: 'absolute', left: -20, top: 0, bottom: 0, width: 2, backgroundColor: '#e3e9ed' },
-  commentAvatar:    { width: 38, height: 38, borderRadius: 19, backgroundColor: '#d5e3fd', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  commentInitials:  { fontFamily: 'Manrope_700Bold', fontSize: 13, color: '#455367' },
-  commentBody:      { flex: 1 },
+  commentRow: { flexDirection: 'row', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f4f7' },
+  commentRowReply: { marginLeft: 32, paddingLeft: 12, borderLeftWidth: 0 },
+  replyLine: { position: 'absolute', left: -20, top: 0, bottom: 0, width: 2, backgroundColor: '#e3e9ed' },
+  commentAvatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#d5e3fd', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  commentInitials: { fontFamily: 'Manrope_700Bold', fontSize: 13, color: '#455367' },
+  commentBody: { flex: 1 },
   commentHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  commentName:      { fontFamily: 'Manrope_700Bold', fontSize: 14, color: '#2c3437' },
-  commentTime:      { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#747c80' },
-  commentText:      { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#596064', lineHeight: 20, marginBottom: 8 },
-  commentActions:   { flexDirection: 'row', gap: 16 },
+  commentName: { fontFamily: 'Manrope_700Bold', fontSize: 14, color: '#2c3437' },
+  commentTime: { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#747c80' },
+  commentText: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#596064', lineHeight: 20, marginBottom: 8 },
+  commentActions: { flexDirection: 'row', gap: 16 },
   commentActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  commentActionText:  { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#a0aab0' },
+  commentActionText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#a0aab0' },
   commentActionReply: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#a0aab0' },
 
   // Reply banner
-  replyBanner:     { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#eef2ff', borderTopWidth: 1, borderTopColor: '#e0e7ff' },
+  replyBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#eef2ff', borderTopWidth: 1, borderTopColor: '#e0e7ff' },
   replyBannerText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, color: '#526075' },
 
   // Input bar
-  inputBar:      { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 16, paddingTop: 12, backgroundColor: '#ffffff', borderTopWidth: 1, borderTopColor: '#f0f4f7' },
-  inputField:    { flex: 1, backgroundColor: '#f0f4f7', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 15, color: '#2c3437', maxHeight: 120 },
-  postIconBtn:   { width: 44, height: 44, borderRadius: 22, backgroundColor: '#526075', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 16, paddingTop: 12, backgroundColor: '#ffffff', borderTopWidth: 1, borderTopColor: '#f0f4f7' },
+  inputField: { flex: 1, backgroundColor: '#f0f4f7', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 15, color: '#2c3437', maxHeight: 120 },
+  postIconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#526075', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 });

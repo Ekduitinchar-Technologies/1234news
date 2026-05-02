@@ -10,16 +10,13 @@
 // MARKET TICKER  →  future: GET /api/markets/tickers
 // ─────────────────────────────────────────────────────────────────
 export const MARKET_TICKERS = [
-  { id: 'gold',   label: 'GOLD',    value: '$2,341.20', change: '-0.4%',  up: false },
-  { id: 'silver', label: 'SILVER',  value: '$28.45',    change: '+1.2%',  up: true  },
-  { id: 'sp500',  label: 'S&P 500', value: '5,123.44',  change: '+0.15%', up: true  },
+  { id: 'nepse',  label: 'NEPSE',   value: '2,015.42',  change: '+0.15%', up: true  },
+  { id: 'gold',   label: 'GOLD',    value: 'रु 118,500', change: '+0.4%',  up: true  },
+  { id: 'silver', label: 'SILVER',  value: 'रु 1,425',   change: '-0.2%',  up: false },
+  { id: 'usdnpr', label: 'USD/NPR', value: 'रु 133.50',  change: '+0.0%',  up: true  },
   { id: 'btc',    label: 'BTC',     value: '$64,210',   change: '+2.4%',  up: true  },
   { id: 'eth',    label: 'ETH',     value: '$3,180',    change: '-0.8%',  up: false },
-  { id: 'nasdaq', label: 'NASDAQ',  value: '18,244',    change: '+0.3%',  up: true  },
-  { id: 'dow',    label: 'DOW',     value: '38,910',    change: '+0.1%',  up: true  },
   { id: 'oil',    label: 'OIL',     value: '$82.10',    change: '-1.1%',  up: false },
-  { id: 'eurusd', label: 'EUR/USD', value: '1.0834',    change: '+0.2%',  up: true  },
-  { id: 'usdjpy', label: 'USD/JPY', value: '151.24',    change: '-0.05%', up: false },
 ];
 
 // ─────────────────────────────────────────────────────────────────

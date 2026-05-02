@@ -10,36 +10,36 @@ const RSS2JSON_BASE = 'https://api.rss2json.com/v1/api.json';
 // Keep this in sync with sources.js when adding/removing sources.
 const DEFAULT_SOURCES = [
   // ── NEPALI ───────────────────────────────────────────────────
-  { id: 'kantipur', name: 'Kantipur', sub: 'National Daily', letter: 'K', logoUrl: 'https://logo.clearbit.com/kantipurdaily.com', rssUrl: 'https://ekantipur.com/feed', country: 'NP', enabled: true },
-  { id: 'onlinekhabar', name: 'Online Khabar', sub: 'Digital First', letter: 'O', logoUrl: 'https://logo.clearbit.com/onlinekhabar.com', rssUrl: 'https://www.onlinekhabar.com/feed', country: 'NP', enabled: true },
-  { id: 'ratopati', name: 'Ratopati', sub: 'Breaking News', letter: 'R', logoUrl: 'https://logo.clearbit.com/ratopati.com', rssUrl: 'https://ratopati.com/rss', country: 'NP', enabled: true },
-  { id: 'setopati', name: 'Setopati', sub: 'Social & Political', letter: 'S', logoUrl: 'https://logo.clearbit.com/setopati.com', rssUrl: 'https://www.setopati.com/feed', country: 'NP', enabled: false },
-  { id: 'khabarhub', name: 'Khabarhub', sub: 'Mainstream Bias-free', letter: 'K', logoUrl: 'https://logo.clearbit.com/khabarhub.com', rssUrl: 'https://english.khabarhub.com/feed/', country: 'NP', enabled: false },
-  { id: 'nepalnews', name: 'Nepal News', sub: 'Oldest Digital', letter: 'N', logoUrl: 'https://logo.clearbit.com/nepalnews.com', rssUrl: 'https://www.nepalnews.com/rss', country: 'NP', enabled: false },
-  { id: 'himalayan', name: 'The Himalayan', sub: 'English Daily', letter: 'H', logoUrl: 'https://logo.clearbit.com/thehimalayantimes.com', rssUrl: 'https://thehimalayantimes.com/feed/', country: 'NP', enabled: false },
-  { id: 'kathmandupost', name: 'Kathmandu Post', sub: 'Premier English', letter: 'K', logoUrl: 'https://logo.clearbit.com/kathmandupost.com', rssUrl: 'https://kathmandupost.com/rss', country: 'NP', enabled: false },
-  { id: 'myrepublica', name: 'My Republica', sub: 'Investigative', letter: 'M', logoUrl: 'https://logo.clearbit.com/myrepublica.nagariknetwork.com', rssUrl: 'https://myrepublica.nagariknetwork.com/rss/', country: 'NP', enabled: false },
-  { id: 'annapurnapost', name: 'Annapurna Post', sub: 'Visual News', letter: 'A', logoUrl: 'https://logo.clearbit.com/annapurnapost.com', rssUrl: 'https://annapurnapost.com/rss', country: 'NP', enabled: false },
-  { id: 'ujyaalo', name: 'Ujyaalo', sub: 'Radio Network', letter: 'U', logoUrl: 'https://logo.clearbit.com/ujyaalo.com', rssUrl: 'https://ujyaalo.com/feed/', country: 'NP', enabled: false },
-  { id: 'rssnepal', name: 'RSS Nepal', sub: 'News Agency', letter: 'R', logoUrl: 'https://logo.clearbit.com/rss.com.np', rssUrl: 'https://www.rss.com.np/feed', country: 'NP', enabled: false },
-  { id: 'nagarik', name: 'Nagarik News', sub: 'Public Affairs', letter: 'N', logoUrl: 'https://logo.clearbit.com/nagariknetwork.com', rssUrl: 'https://nagariknews.nagariknetwork.com/feed/', country: 'NP', enabled: false },
-  { id: 'gorkhapatra', name: 'Gorkhapatra', sub: "Nepal's Oldest Paper", letter: 'G', logoUrl: 'https://logo.clearbit.com/gorkhapatraonline.com', rssUrl: 'https://gorkhapatraonline.com/rss', country: 'NP', enabled: false },
-  { id: 'nepalitimes', name: 'Nepali Times', sub: 'In-depth Weekly', letter: 'N', logoUrl: 'https://logo.clearbit.com/nepalitimes.com', rssUrl: 'https://www.nepalitimes.com/feed/', country: 'NP', enabled: false },
-  { id: 'imaginekhabar', name: 'Imagine Khabar', sub: 'Digital Native', letter: 'I', logoUrl: 'https://logo.clearbit.com/imaginekhabar.com', rssUrl: 'https://imaginekhabar.com/rss', country: 'NP', enabled: false },
+  { id: 'kantipur', name: 'Kantipur', sub: 'National Daily', letter: 'K', logoUrl: 'https://ekantipur.com/assets/images/kantipur-logo.svg', rssUrl: 'https://ekantipur.com/feed', country: 'NP', enabled: true },
+  { id: 'onlinekhabar', name: 'Online Khabar', sub: 'Digital First', letter: 'O', logoUrl: 'https://www.onlinekhabar.com/wp-content/themes/onlinekhabar-2021/img/logo-white.svg', rssUrl: 'https://www.onlinekhabar.com/feed', country: 'NP', enabled: true },
+  { id: 'ratopati', name: 'Ratopati', sub: 'Breaking News', letter: 'R', logoUrl: 'https://npcdn.ratopati.com/media/setting/ratopati-logo_qQKWIp37FR.png', rssUrl: 'https://ratopati.com/rss', country: 'NP', enabled: true },
+  { id: 'setopati', name: 'Setopati', sub: 'Social & Political', letter: 'S', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=setopati.com', rssUrl: 'https://www.setopati.com/feed', country: 'NP', enabled: false },
+  { id: 'khabarhub', name: 'Khabarhub', sub: 'Mainstream Bias-free', letter: 'K', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=khabarhub.com', rssUrl: 'https://english.khabarhub.com/feed/', country: 'NP', enabled: false },
+  { id: 'nepalnews', name: 'Nepal News', sub: 'Oldest Digital', letter: 'N', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=nepalnews.com', rssUrl: 'https://www.nepalnews.com/rss', country: 'NP', enabled: false },
+  { id: 'himalayan', name: 'The Himalayan', sub: 'English Daily', letter: 'H', logoUrl: 'https://thehimalayantimes.com/theme_himalayantimes/images/favicon.png', rssUrl: 'https://thehimalayantimes.com/feed/', country: 'NP', enabled: false },
+  { id: 'kathmandupost', name: 'Kathmandu Post', sub: 'Premier English', letter: 'K', logoUrl: 'https://jcss-cdn.kathmandupost.com/assets/images/device-icon/android-icon-192x192.png', rssUrl: 'https://kathmandupost.com/rss', country: 'NP', enabled: false },
+  { id: 'myrepublica', name: 'My Republica', sub: 'Investigative', letter: 'M', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=myrepublica.nagariknetwork.com', rssUrl: 'https://myrepublica.nagariknetwork.com/rss/', country: 'NP', enabled: false },
+  { id: 'annapurnapost', name: 'Annapurna Post', sub: 'Visual News', letter: 'A', logoUrl: 'https://snowberry.prixacdn.net/media/gallery_folder/anm-fav_qoxqP25etb_w9atwz27jbcg7tngui3nbrxonkizics7ahdk4abp4xmtzjemqdmsswgktnlo.ico', rssUrl: 'https://annapurnapost.com/rss', country: 'NP', enabled: false },
+  { id: 'ujyaalo', name: 'Ujyaalo', sub: 'Radio Network', letter: 'U', logoUrl: 'https://unncdn.prixa.net/media/albums/favicon_ek1TeKvY53.jpg', rssUrl: 'https://ujyaalo.com/feed/', country: 'NP', enabled: false },
+  { id: 'rssnepal', name: 'RSS Nepal', sub: 'News Agency', letter: 'R', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=rss.com.np', rssUrl: 'https://www.rss.com.np/feed', country: 'NP', enabled: false },
+  { id: 'nagarik', name: 'Nagarik News', sub: 'Public Affairs', letter: 'N', logoUrl: 'https://jcss.nagariknewscdn.com/images/favicon.png', rssUrl: 'https://nagariknews.nagariknetwork.com/feed/', country: 'NP', enabled: false },
+  { id: 'gorkhapatra', name: 'Gorkhapatra', sub: "Nepal's Oldest Paper", letter: 'G', logoUrl: 'https://gorkhapatraonline.com/landing-assets/img/favicon.png', rssUrl: 'https://gorkhapatraonline.com/rss', country: 'NP', enabled: false },
+  { id: 'nepalitimes', name: 'Nepali Times', sub: 'In-depth Weekly', letter: 'N', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=nepalitimes.com', rssUrl: 'https://www.nepalitimes.com/feed/', country: 'NP', enabled: false },
+  { id: 'imaginekhabar', name: 'Imagine Khabar', sub: 'Digital Native', letter: 'I', logoUrl: 'https://www.imagekhabar.com/wp-content/uploads/2020/06/cropped-ALPHA-LOGO-2-150x150.png', rssUrl: 'https://imaginekhabar.com/rss', country: 'NP', enabled: false },
   // ── INTERNATIONAL ─────────────────────────────────────────────
-  { id: 'bbc', name: 'BBC News', sub: 'British Broadcasting', letter: 'B', logoUrl: 'https://logo.clearbit.com/bbc.com', rssUrl: 'https://feeds.bbci.co.uk/news/rss.xml', country: 'INT', enabled: true },
-  { id: 'aljazeera', name: 'Al Jazeera', sub: 'Qatar-based Global', letter: 'A', logoUrl: 'https://logo.clearbit.com/aljazeera.com', rssUrl: 'https://www.aljazeera.com/xml/rss/all.xml', country: 'INT', enabled: true },
-  { id: 'guardian', name: 'The Guardian', sub: 'UK Independent', letter: 'G', logoUrl: 'https://logo.clearbit.com/theguardian.com', rssUrl: 'https://www.theguardian.com/world/rss', country: 'INT', enabled: true },
-  { id: 'npr', name: 'NPR News', sub: 'US Public Radio', letter: 'N', logoUrl: 'https://logo.clearbit.com/npr.org', rssUrl: 'https://feeds.npr.org/1001/rss.xml', country: 'INT', enabled: true },
-  { id: 'cnn', name: 'CNN', sub: 'Cable News Network', letter: 'C', logoUrl: 'https://logo.clearbit.com/cnn.com', rssUrl: 'http://rss.cnn.com/rss/edition.rss', country: 'INT', enabled: false },
-  { id: 'thehindu', name: 'The Hindu', sub: 'South Asian Persp.', letter: 'H', logoUrl: 'https://logo.clearbit.com/thehindu.com', rssUrl: 'https://www.thehindu.com/news/international/?service=rss', country: 'INT', enabled: false },
-  { id: 'ndtv', name: 'NDTV', sub: 'Indian National', letter: 'N', logoUrl: 'https://logo.clearbit.com/ndtv.com', rssUrl: 'https://feeds.feedburner.com/ndtvnews-top-stories', country: 'INT', enabled: false },
-  { id: 'dw', name: 'DW News', sub: 'Deutsche Welle', letter: 'D', logoUrl: 'https://logo.clearbit.com/dw.com', rssUrl: 'https://rss.dw.com/rdf/rss-en-world', country: 'INT', enabled: false },
-  { id: 'rfi', name: 'RFI English', sub: "Radio France Int'l", letter: 'R', logoUrl: 'https://logo.clearbit.com/rfi.fr', rssUrl: 'https://www.rfi.fr/en/rss', country: 'INT', enabled: false },
+  { id: 'bbc', name: 'BBC News', sub: 'British Broadcasting', letter: 'B', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=bbc.com', rssUrl: 'https://feeds.bbci.co.uk/news/rss.xml', country: 'INT', enabled: true },
+  { id: 'aljazeera', name: 'Al Jazeera', sub: 'Qatar-based Global', letter: 'A', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=aljazeera.com', rssUrl: 'https://www.aljazeera.com/xml/rss/all.xml', country: 'INT', enabled: true },
+  { id: 'guardian', name: 'The Guardian', sub: 'UK Independent', letter: 'G', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=theguardian.com', rssUrl: 'https://www.theguardian.com/world/rss', country: 'INT', enabled: true },
+  { id: 'npr', name: 'NPR News', sub: 'US Public Radio', letter: 'N', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=npr.org', rssUrl: 'https://feeds.npr.org/1001/rss.xml', country: 'INT', enabled: true },
+  { id: 'cnn', name: 'CNN', sub: 'Cable News Network', letter: 'C', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=cnn.com', rssUrl: 'http://rss.cnn.com/rss/edition.rss', country: 'INT', enabled: false },
+  { id: 'thehindu', name: 'The Hindu', sub: 'South Asian Persp.', letter: 'H', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=thehindu.com', rssUrl: 'https://www.thehindu.com/news/international/?service=rss', country: 'INT', enabled: false },
+  { id: 'ndtv', name: 'NDTV', sub: 'Indian National', letter: 'N', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=ndtv.com', rssUrl: 'https://feeds.feedburner.com/ndtvnews-top-stories', country: 'INT', enabled: false },
+  { id: 'dw', name: 'DW News', sub: 'Deutsche Welle', letter: 'D', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=dw.com', rssUrl: 'https://rss.dw.com/rdf/rss-en-world', country: 'INT', enabled: false },
+  { id: 'rfi', name: 'RFI English', sub: "Radio France Int'l", letter: 'R', logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=rfi.fr', rssUrl: 'https://www.rfi.fr/en/rss', country: 'INT', enabled: false },
 ];
 
 // ─── MODULE STATE ────────────────────────────────────────────────
-const AF_VERSION = '2'; // bump when source schema changes
+const AF_VERSION = '9'; // bump when source schema changes
 if (localStorage.getItem('af_version') !== AF_VERSION) {
   localStorage.removeItem('af_sources'); // clear stale old format
   localStorage.setItem('af_version', AF_VERSION);
@@ -50,6 +50,7 @@ const AF = {
   freshness: 24,
   results: [],
   running: false,
+  stopRequested: false,
 };
 
 function afPersist() {
@@ -143,6 +144,7 @@ const AIFETCH = {
     if (!active.length) { UI.showToast('Select at least one source', 'error'); return; }
 
     AF.running = true;
+    AF.stopRequested = false;
     AIFETCH._setBusy(true);
     AIFETCH._resetLog();
     AIFETCH._progress(0, 'Starting…');
@@ -153,6 +155,7 @@ const AIFETCH = {
       const cutoff = Date.now() - AF.freshness * 3_600_000;
 
       for (let i = 0; i < active.length; i++) {
+        if (AF.stopRequested) break;
         const src = active[i];
         AIFETCH._progress(Math.round(i / active.length * 30), `Fetching ${src.name}…`);
         try {
@@ -183,6 +186,7 @@ const AIFETCH = {
 
       // ── 3. Summarize each cluster ───────────────────────────
       for (let i = 0; i < clusters.length; i++) {
+        if (AF.stopRequested) break;
         AIFETCH._progress(
           60 + Math.round(i / clusters.length * 38),
           `Summarizing ${i + 1}/${clusters.length}: "${clusters[i].topic}"…`
@@ -194,11 +198,16 @@ const AIFETCH = {
         } catch (e) {
           AIFETCH._log(`⚠ Summarize failed for "${clusters[i].topic}": ${e.message}`);
         }
-        await AIFETCH._sleep(600);
+        await AIFETCH._sleep(3000); // Increased sleep to avoid 429
       }
 
-      AIFETCH._progress(100, `Done! ${AF.results.length} article(s) ready for review.`);
-      AIFETCH._log(`─── Complete. ${AF.results.length} article(s) generated.`);
+      if (AF.stopRequested) {
+        AIFETCH._progress(100, 'Pipeline stopped by user.');
+        AIFETCH._log('─── Stopped by user.');
+      } else {
+        AIFETCH._progress(100, `Done! ${AF.results.length} article(s) ready for review.`);
+        AIFETCH._log(`─── Complete. ${AF.results.length} article(s) generated.`);
+      }
 
     } catch (e) {
       AIFETCH._progress(100, `Error: ${e.message}`);
@@ -227,13 +236,21 @@ const AIFETCH = {
       return isNaN(t) || t >= cutoff;
     });
 
-    return validItems.map(it => ({
-      title: (it.title || '').replace(/<[^>]+>/g, '').trim(),
-      description: (it.description || '').replace(/<[^>]+>/g, '').slice(0, 600).trim(),
-      link: it.link || '',
-      pubDate: it.pubDate || '',
-      thumbnail: it.enclosure?.link || it.thumbnail || '',
-    }));
+    return validItems.map(it => {
+      let thumbnail = it.enclosure?.link || it.thumbnail || '';
+      // If thumbnail is missing or looks like a tiny WP thumbnail, try extracting from description
+      if (!thumbnail || thumbnail.includes('-150x150') || thumbnail.includes('-300x300')) {
+        const imgMatch = (it.description || '').match(/<img[^>]+src=["']([^"'>]+)["']/i);
+        if (imgMatch) thumbnail = imgMatch[1];
+      }
+      return {
+        title: (it.title || '').replace(/<[^>]+>/g, '').trim(),
+        description: (it.description || '').replace(/<[^>]+>/g, '').slice(0, 600).trim(),
+        link: it.link || '',
+        pubDate: it.pubDate || '',
+        thumbnail: thumbnail,
+      };
+    });
   },
 
   // ── TOPIC CLUSTERING ─────────────────────────────────────────
@@ -247,6 +264,7 @@ const AIFETCH = {
     let offset = 0;
 
     while (offset < articles.length) {
+      if (AF.stopRequested) break;
       const batch = articles.slice(offset, offset + BATCH);
       // Use local 0-based indices so the model matches the example format
       const list = batch.map((a, i) => `[${i}] ${a.sourceName}: ${a.title}`).join('\n');
@@ -301,56 +319,138 @@ Reply ONLY with this exact JSON shape (no markdown):
     ).join('\n\n---\n\n');
 
     // ── Step 1: metadata + summary ───────────────────────────
-    const metaPrompt = `You are a neutral news editor for "Lucid Newsroom". Read these ${arts.length} article(s) from [${names.join(', ')}]:
+    const metaPrompt = `You are a bilingual (English & Nepali) neutral news editor for "Lucid Newsroom". Read these ${arts.length} article(s) from [${names.join(', ')}]:
 
 ${text}
 
 Reply ONLY with valid JSON (no markdown):
 {
-  "title": "Neutral headline, max 15 words",
+  "title_en": "English headline, max 15 words",
+  "title_np": "Nepali headline, max 15 words",
   "category": "one of: Politics|Technology|Business|Science|Health|Sports|Entertainment|World|Environment|Culture",
   "tags": ["tag1","tag2","tag3"],
-  "summary": "ONE paragraph, EXACTLY 60-69 words. Neutral, factual, covers who/what/where/when. Count words and adjust before outputting."
+  "summary_en": "ONE paragraph in English, EXACTLY 60-69 words. Neutral, factual, covers who/what/where/when. Do not include word counts.",
+  "summary_np": "ONE paragraph in Nepali, EXACTLY 60-69 words. Neutral, factual. Do not include word counts."
 }`;
 
     const metaRaw = await AIFETCH._llm(metaPrompt);
     const meta = AIFETCH._json(metaRaw);
+    
+    await AIFETCH._sleep(2000); // Sleep to avoid rate limiting before generating body
 
-    // ── Step 2: full article body ────────────────────────────
-    const bodyPrompt = `You are a neutral journalist writing a full article for "Lucid Newsroom" based on these ${arts.length} source(s) from [${names.join(', ')}]:
+    // ── Step 2: full article body (Plain Text) ───────────────────
+    const bodyPromptBase = `You are a neutral journalist for "Lucid Newsroom". Based on ${arts.length} source(s) from [${names.join(', ')}]:
 
 ${text}
 
-Write the article BODY only — plain prose, NO JSON, NO markdown, NO bullet points.
-Requirements:
-- Exactly 5 paragraphs separated by a blank line
-- Paragraph 1 (~90 words): what happened — the key facts
-- Paragraph 2 (~90 words): what each source reported and their angle
-- Paragraph 3 (~90 words): background context and timeline
-- Paragraph 4 (~90 words): significance, implications, and what to watch next
-- Paragraph 5 (~90 words): broader impact, expert perspectives, and future outlook
-- Total: 400-500 words. Count and expand short paragraphs before finishing.
+Task: Write the full article body as plain prose in {LANG}.
+CRITICAL INSTRUCTIONS:
+- Exactly 4 paragraphs, separated by double newlines.
+- NO conversational openings ("Here is...", "Sure...").
+- NO word counts, NO metadata, NO titles, NO headers.
+- Reply ONLY with the pure article text paragraphs. Nothing else.`;
 
-Output ONLY the body text, nothing else:`;
+    const bodyPromptEn = bodyPromptBase.replace('{LANG}', 'English');
+    const bodyPromptNp = bodyPromptBase.replace('{LANG}', 'Nepali (नेपाली)');
 
-    const bodyRaw = await AIFETCH._llm(bodyPrompt);
-    // body comes back as plain text, not JSON — strip any accidental JSON wrapping
-    let body = bodyRaw.trim();
-    const bodyJsonMatch = body.match(/"body"\s*:\s*"([\s\S]*?)"\s*\}?\s*$/);
-    if (bodyJsonMatch) body = bodyJsonMatch[1].replace(/\\n/g, '\n');
+    let body_en = '';
+    let body_np = '';
+    try {
+      const bodyRawEn = await AIFETCH._llmText(bodyPromptEn);
+      await AIFETCH._sleep(2000); // Sleep to avoid rate limiting
+      const bodyRawNp = await AIFETCH._llmText(bodyPromptNp);
 
-    // Log a warning if word counts are still off
-    const wS = AIFETCH._wc(meta.summary || '');
-    const wB = AIFETCH._wc(body);
-    if (wS < 55 || wB < 350) {
-      AIFETCH._log(`⚠ Word count low for "${cluster.topic}": summary=${wS} words, body=${wB} words`);
+      body_en = AIFETCH._extractBody(bodyRawEn) || bodyRawEn.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
+      body_np = AIFETCH._extractBody(bodyRawNp) || bodyRawNp.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
+    } catch (e) {
+      AIFETCH._log(`⚠ Body generation failed: ${e.message}`);
+    }
+
+    // Log a warning if word counts are off for English
+    const wS = AIFETCH._wc(meta.summary_en || '');
+    const wB = AIFETCH._wc(body_en);
+    if (wS < 55 || wB < 250) {
+      AIFETCH._log(`⚠ Word count low for "${cluster.topic}": summary_en=${wS} words, body_en=${wB} words`);
+    }
+
+    // ── Step 3: Fetch High-Res Image from Source ────────────
+    let highResImage = arts.find(a => a.thumbnail)?.thumbnail || '';
+    
+    // Attempt to scrape High-Res Image for the main article in the cluster
+    if (arts[0]?.link) {
+      const tryScrape = async (proxyBase, isJsonProxy) => {
+        try {
+          const proxyUrl = proxyBase + encodeURIComponent(arts[0].link);
+          const imgRes = await fetch(proxyUrl);
+          if (!imgRes.ok) return null;
+          
+          let html = '';
+          if (isJsonProxy) {
+            const imgJson = await imgRes.json();
+            html = imgJson.contents || imgJson.result || ''; // handle different proxy formats
+          } else {
+            html = await imgRes.text();
+          }
+          
+          // Support multiple meta tags and common class patterns (OnlineKhabar uses post-thumbnail)
+          const matches = [
+            html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i),
+            html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i),
+            html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i),
+            // Local site specific: WordPress post-thumbnail (OnlineKhabar)
+            html.match(/class=["'][^"']*post-thumbnail[^"']*["'][^>]*>\s*<img[^>]+src=["']([^"']+)["']/i),
+            // Featured/Hero patterns
+            html.match(/<img[^>]+class=["'][^"']*(?:featured|hero|main-image|cover)[^"']*["'][^>]+src=["']([^"']+)["']/i),
+            html.match(/<meta[^>]+name=["']thumbnail["'][^>]+content=["']([^"']+)["']/i),
+            html.match(/<link[^>]+rel=["']image_src["'][^>]+href=["']([^"']+)["']/i)
+          ];
+
+          for (const m of matches) {
+            if (m && m[1] && !m[1].includes('data:image')) return m[1];
+          }
+
+          // Ultimate fallback: find the first <img> that looks substantial (jpg/png/webp)
+          const allImgs = html.matchAll(/<img[^>]+src=["']([^"']+\.(?:jpg|jpeg|png|webp|avif)[^"']*)["']/gi);
+          for (const img of allImgs) {
+            const url = img[1];
+            if (url && !url.includes('avatar') && !url.includes('logo') && !url.includes('icon')) {
+              return url;
+            }
+          }
+          return null;
+        } catch (e) { return null; }
+      };
+
+      // Try multiple proxies to bypass local blocks
+      let scraped = await tryScrape('https://api.codetabs.com/v1/proxy?quest=', false);
+      if (!scraped) scraped = await tryScrape('https://api.allorigins.win/get?url=', true);
+      if (!scraped) scraped = await tryScrape('https://thingproxy.freeboard.io/fetch/', false);
+
+      if (scraped) {
+        highResImage = scraped;
+        // Ensure it's an absolute URL
+        if (highResImage.startsWith('//')) highResImage = 'https:' + highResImage;
+        else if (highResImage.startsWith('/') && !highResImage.startsWith('//')) {
+          try {
+            const urlObj = new URL(arts[0].link);
+            highResImage = urlObj.origin + (highResImage.startsWith('/') ? '' : '/') + highResImage;
+          } catch(e) {}
+        }
+      }
     }
 
     return {
-      ...meta,
-      body,
+      title_en: meta.title_en || meta.title || cluster.topic,
+      title_np: meta.title_np || cluster.topic,
+      category: meta.category || 'World',
+      tags: meta.tags || [],
+      summary_en: meta.summary_en || meta.summary || '',
+      summary_np: meta.summary_np || '',
+      body_en: body_en,
+      body_np: body_np,
       sources: arts.map(a => ({ name: a.sourceName, url: a.link || a.sourceUrl, logo: a.sourceLogo || '' })),
-      thumbnail: arts.find(a => a.thumbnail)?.thumbnail || '',
+      imageUrl: highResImage, // Primary high-quality image
+      thumbnail: highResImage, // Fallback for components using 'thumbnail'
       _id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
     };
   },
@@ -361,27 +461,168 @@ Output ONLY the body text, nothing else:`;
   // empty `content` field. We also request low reasoning effort so it doesn't
   // blow most of the budget on chain-of-thought before producing JSON.
   _llm: async (prompt) => {
-    const res = await fetch(AI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
-        jsonMode: true,
-      }),
+    // 1. Try POST first (supports jsonMode and large prompts)
+    try {
+      const res = await fetch(AI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.1,
+          jsonMode: true,
+        }),
+      });
+      if (res.ok) return await res.text();
+    } catch (e) {
+      console.warn('POST failed, trying GET fallback...', e);
+    }
+
+    // 2. Fallback to GET for simple text extraction (ignores jsonMode)
+    const encoded = encodeURIComponent(prompt.slice(0, 2000));
+    const res2 = await fetch(`${AI_URL}${encoded}?model=openai&json=true`);
+    if (!res2.ok) {
+      const err = await res2.text();
+      throw new Error(`AI API ${res2.status}: ${err.slice(0, 100)}`);
+    }
+    return await res2.text();
+  },
+
+  // ── AI TEXT CALL (uses mistral to avoid reasoning wrappers) ──
+  _llmText: async (prompt) => {
+    // 1. Try mistral via openai-compat POST
+    try {
+      const res = await fetch('https://text.pollinations.ai/openai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'mistral',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.5,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const t = json?.choices?.[0]?.message?.content || '';
+        if (t && t.length > 100) return t;
+      }
+    } catch (_) {}
+
+    // 2. Try plain text POST
+    try {
+      const res2 = await fetch(AI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.5,
+        }),
+      });
+      if (res2.ok) return await res2.text();
+    } catch (_) {}
+
+    // 3. Last resort: simple GET (best for CORS)
+    const encoded = encodeURIComponent(prompt.slice(0, 2000));
+    const res3 = await fetch(`${AI_URL}${encoded}?model=mistral`);
+    if (!res3.ok) {
+      const err = await res3.text();
+      throw new Error(`AI API (text) ${res3.status}: ${err.slice(0, 100)}`);
+    }
+    return await res3.text();
+  },
+
+  // ── REPAIR TRUNCATED JSON ─────────────────────────────────────
+  // Attempts to close unclosed strings, arrays, and objects.
+  _repairJson: (str) => {
+    let repaired = str.trim();
+    if (!repaired.startsWith('{')) return repaired;
+
+    // Fix unclosed quotes at the very end
+    if (repaired.endsWith('"') && !repaired.endsWith('\\"')) {
+      // If it ends in a quote, check if it's the start of a key/value
+      // or if it needs to be closed. Usually it's a value being cut off.
+      // We'll leave it for now.
+    } else {
+      // If the last char is not a quote, and we are inside a string, close it.
+      const lastQuote = repaired.lastIndexOf('"');
+      const lastOpenBrace = repaired.lastIndexOf('{');
+      const lastOpenBracket = repaired.lastIndexOf('[');
+      
+      // Heuristic: if a quote is open but not closed
+      let quoteCount = 0;
+      for (let i = 0; i < repaired.length; i++) {
+        if (repaired[i] === '"' && (i === 0 || repaired[i-1] !== '\\')) quoteCount++;
+      }
+      if (quoteCount % 2 !== 0) repaired += '"';
+    }
+
+    // Close arrays/objects
+    let stack = [];
+    for (let i = 0; i < repaired.length; i++) {
+      const char = repaired[i];
+      const prev = i > 0 ? repaired[i-1] : '';
+      if (char === '"' && prev !== '\\') {
+        let j = i + 1;
+        while (j < repaired.length && (repaired[j] !== '"' || repaired[j-1] === '\\')) j++;
+        i = j;
+      } else if (char === '{') stack.push('}');
+      else if (char === '[') stack.push(']');
+      else if (char === '}') stack.pop();
+      else if (char === ']') stack.pop();
+    }
+
+    while (stack.length > 0) {
+      repaired += stack.pop();
+    }
+    
+    return repaired;
+  },
+
+  // ── EXTRACT CLEAN PROSE FROM RAW AI BODY RESPONSE ────────────
+  // Aggressively strips JSON wrappers, reasoning blocks, and conversational fluff.
+  _extractBody: (raw) => {
+    let text = raw.trim();
+
+    // 1. openai-compat JSON: { choices:[{message:{content}}] }
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed?.choices?.[0]?.message?.content) {
+        text = parsed.choices[0].message.content.trim();
+      }
+    } catch (_) {}
+
+    // 2. Extract from reasoning content if available
+    const rcMatch = text.match(/"reasoning_content"\s*:\s*"([\s\S]+?)"\s*,\s*"tool_calls"/);
+    if (rcMatch) {
+      const thinking = rcMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\t/g, ' ');
+      text = thinking;
+    }
+
+    // 3. Strip <think> / <thinking> blocks
+    text = text.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
+
+    // 4. Unwrap markdown fences
+    const mdM = text.match(/```(?:[a-z]*)\s*([\s\S]*?)\s*```/);
+    if (mdM) text = mdM[1].trim();
+
+    // 5. Split into paragraphs and filter out conversational/meta padding
+    const rawParas = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+    const cleanParas = rawParas.filter(p => {
+      const lower = p.toLowerCase();
+      // Exclude short meta/padding lines
+      if (p.length < 100 && (lower.includes('word') || lower.includes('count') || lower.includes('words:'))) return false;
+      if (p.length < 150 && /^(here is|sure|based on|the article|below is|i have written|here are)/.test(lower)) return false;
+      if (p.length < 80 && /^(paragraph|note:|disclaimer:|word count)/.test(lower)) return false;
+      // Exclude JSON/code artifacts
+      if (p.startsWith('{') || p.startsWith('[')) return false;
+      return true;
     });
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`AI API ${res.status}: ${err.slice(0, 120)}`);
+
+    if (cleanParas.length > 0) {
+      return cleanParas.join('\n\n').trim();
     }
     
-    // The new text endpoint returns the string directly.
-    const content = await res.text();
-    
-    if (!content) {
-      throw new Error(`AI returned no content. Status: ${res.status}`);
-    }
-    return content;
+    // If filtering removed everything, return the stripped text as a fallback
+    return text;
   },
 
   // ── JSON PARSER ──────────────────────────────────────────────
@@ -410,13 +651,17 @@ Output ONLY the body text, nothing else:`;
     if (outer) candidates.unshift(outer[0]); // try largest first
 
     for (const candidate of candidates) {
-      try { return JSON.parse(candidate); } catch { /* keep trying */ }
+      try { return JSON.parse(candidate); } catch {
+        try { return JSON.parse(AIFETCH._repairJson(candidate)); } catch { /* keep trying */ }
+      }
     }
 
-    // 5. Last resort: try the whole raw string
-    try { return JSON.parse(raw.trim()); } catch { /* fall through */ }
+    // 5. Last resort: try the whole raw string + repair
+    try { return JSON.parse(raw.trim()); } catch {
+      try { return JSON.parse(AIFETCH._repairJson(raw.trim())); } catch { /* fall through */ }
+    }
 
-    console.error('Failed to parse JSON from:', raw.slice(0, 200));
+    console.error('Failed to parse JSON from:', raw.slice(0, 250));
     throw new Error(`AI returned invalid JSON: ${raw.slice(0, 60)}...`);
   },
 
@@ -461,34 +706,68 @@ Output ONLY the body text, nothing else:`;
           </div>
         </div>
 
-        <div class="form-group" style="margin-top:16px">
-          <label>Title</label>
-          <input type="text" id="af-title-${i}" value="${escapeAttr(r.title || '')}" />
-        </div>
-
-        <div class="form-group">
-          <label>Summary <small style="color:var(--text-3)">(≤ 69 words)</small></label>
-          <textarea id="af-sum-${i}" rows="4"
-            oninput="AIFETCH._wcUp('af-sum-${i}','af-sb-${i}','af-sc-${i}',60,69)"
-          >${escapeHtml(r.summary || '')}</textarea>
-          <div class="word-count-bar">
-            <div class="word-bar-track"><div class="word-bar-fill" id="af-sb-${i}"
-              style="width:${Math.min(wS / 69 * 100, 100)}%;background:${sOk ? '#22c55e' : wS > 69 ? '#ef4444' : '#f59e0b'}">
-            </div></div>
-            <span class="word-count ${sOk ? 'ok' : wS > 69 ? 'over' : 'warn'}" id="af-sc-${i}">${wS} / 69 words</span>
+        <div class="form-row">
+          <div class="form-group" style="margin-top:16px; flex: 1;">
+            <label>Title (English)</label>
+            <input type="text" id="af-title-en-${i}" value="${escapeAttr(r.title_en || '')}" />
+          </div>
+          <div class="form-group" style="margin-top:16px; flex: 1;">
+            <label>Title (Nepali)</label>
+            <input type="text" id="af-title-np-${i}" value="${escapeAttr(r.title_np || '')}" />
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Body <small style="color:var(--text-3)">(400–600 words)</small></label>
-          <textarea id="af-body-${i}" rows="14"
-            oninput="AIFETCH._wcUp('af-body-${i}','af-bb-${i}','af-bc-${i}',400,600)"
-          >${escapeHtml(r.body || '')}</textarea>
-          <div class="word-count-bar">
-            <div class="word-bar-track"><div class="word-bar-fill" id="af-bb-${i}"
-              style="width:${Math.min(wB / 600 * 100, 100)}%;background:${bOk ? '#22c55e' : wB > 600 ? '#ef4444' : '#f59e0b'}">
-            </div></div>
-            <span class="word-count ${bOk ? 'ok' : wB > 600 ? 'over' : 'warn'}" id="af-bc-${i}">${wB} / 600 words</span>
+        <div class="form-row">
+          <div class="form-group" style="flex: 1;">
+            <label>Summary (EN) <small style="color:var(--text-3)">(≤ 69 words)</small></label>
+            <textarea id="af-sum-en-${i}" rows="4"
+              oninput="AIFETCH._wcUp('af-sum-en-${i}','af-sb-en-${i}','af-sc-en-${i}',60,69)"
+            >${escapeHtml(r.summary_en || '')}</textarea>
+            <div class="word-count-bar">
+              <div class="word-bar-track"><div class="word-bar-fill" id="af-sb-en-${i}"
+                style="width:${Math.min((AIFETCH._wc(r.summary_en || '') / 69) * 100, 100)}%;background:${(AIFETCH._wc(r.summary_en || '') >= 60 && AIFETCH._wc(r.summary_en || '') <= 69) ? '#22c55e' : AIFETCH._wc(r.summary_en || '') > 69 ? '#ef4444' : '#f59e0b'}">
+              </div></div>
+              <span class="word-count ${(AIFETCH._wc(r.summary_en || '') >= 60 && AIFETCH._wc(r.summary_en || '') <= 69) ? 'ok' : AIFETCH._wc(r.summary_en || '') > 69 ? 'over' : 'warn'}" id="af-sc-en-${i}">${AIFETCH._wc(r.summary_en || '')} / 69 words</span>
+            </div>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>Summary (NP) <small style="color:var(--text-3)">(≤ 69 words)</small></label>
+            <textarea id="af-sum-np-${i}" rows="4"
+              oninput="AIFETCH._wcUp('af-sum-np-${i}','af-sb-np-${i}','af-sc-np-${i}',60,69)"
+            >${escapeHtml(r.summary_np || '')}</textarea>
+            <div class="word-count-bar">
+              <div class="word-bar-track"><div class="word-bar-fill" id="af-sb-np-${i}"
+                style="width:${Math.min((AIFETCH._wc(r.summary_np || '') / 69) * 100, 100)}%;background:${(AIFETCH._wc(r.summary_np || '') >= 60 && AIFETCH._wc(r.summary_np || '') <= 69) ? '#22c55e' : AIFETCH._wc(r.summary_np || '') > 69 ? '#ef4444' : '#f59e0b'}">
+              </div></div>
+              <span class="word-count ${(AIFETCH._wc(r.summary_np || '') >= 60 && AIFETCH._wc(r.summary_np || '') <= 69) ? 'ok' : AIFETCH._wc(r.summary_np || '') > 69 ? 'over' : 'warn'}" id="af-sc-np-${i}">${AIFETCH._wc(r.summary_np || '')} / 69 words</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex: 1;">
+            <label>Body (EN) <small style="color:var(--text-3)">(400–600 words)</small></label>
+            <textarea id="af-body-en-${i}" rows="14"
+              oninput="AIFETCH._wcUp('af-body-en-${i}','af-bb-en-${i}','af-bc-en-${i}',400,600)"
+            >${escapeHtml(r.body_en || '')}</textarea>
+            <div class="word-count-bar">
+              <div class="word-bar-track"><div class="word-bar-fill" id="af-bb-en-${i}"
+                style="width:${Math.min((AIFETCH._wc(r.body_en || '') / 600) * 100, 100)}%;background:${(AIFETCH._wc(r.body_en || '') >= 400 && AIFETCH._wc(r.body_en || '') <= 600) ? '#22c55e' : AIFETCH._wc(r.body_en || '') > 600 ? '#ef4444' : '#f59e0b'}">
+              </div></div>
+              <span class="word-count ${(AIFETCH._wc(r.body_en || '') >= 400 && AIFETCH._wc(r.body_en || '') <= 600) ? 'ok' : AIFETCH._wc(r.body_en || '') > 600 ? 'over' : 'warn'}" id="af-bc-en-${i}">${AIFETCH._wc(r.body_en || '')} / 600 words</span>
+            </div>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>Body (NP) <small style="color:var(--text-3)">(400–600 words)</small></label>
+            <textarea id="af-body-np-${i}" rows="14"
+              oninput="AIFETCH._wcUp('af-body-np-${i}','af-bb-np-${i}','af-bc-np-${i}',400,600)"
+            >${escapeHtml(r.body_np || '')}</textarea>
+            <div class="word-count-bar">
+              <div class="word-bar-track"><div class="word-bar-fill" id="af-bb-np-${i}"
+                style="width:${Math.min((AIFETCH._wc(r.body_np || '') / 600) * 100, 100)}%;background:${(AIFETCH._wc(r.body_np || '') >= 400 && AIFETCH._wc(r.body_np || '') <= 600) ? '#22c55e' : AIFETCH._wc(r.body_np || '') > 600 ? '#ef4444' : '#f59e0b'}">
+              </div></div>
+              <span class="word-count ${(AIFETCH._wc(r.body_np || '') >= 400 && AIFETCH._wc(r.body_np || '') <= 600) ? 'ok' : AIFETCH._wc(r.body_np || '') > 600 ? 'over' : 'warn'}" id="af-bc-np-${i}">${AIFETCH._wc(r.body_np || '')} / 600 words</span>
+            </div>
           </div>
         </div>
 
@@ -527,9 +806,15 @@ Output ONLY the body text, nothing else:`;
   _collect: (i) => {
     const r = AF.results[i];
     return {
-      title: (document.getElementById(`af-title-${i}`)?.value || r.title || '').trim(),
-      summary: (document.getElementById(`af-sum-${i}`)?.value || r.summary || '').trim(),
-      fullBody: (document.getElementById(`af-body-${i}`)?.value || r.body || '').trim(),
+      title: (document.getElementById(`af-title-en-${i}`)?.value || r.title_en || '').trim(), // Legacy fallback
+      title_en: (document.getElementById(`af-title-en-${i}`)?.value || r.title_en || '').trim(),
+      title_np: (document.getElementById(`af-title-np-${i}`)?.value || r.title_np || '').trim(),
+      summary: (document.getElementById(`af-sum-en-${i}`)?.value || r.summary_en || '').trim(), // Legacy fallback
+      summary_en: (document.getElementById(`af-sum-en-${i}`)?.value || r.summary_en || '').trim(),
+      summary_np: (document.getElementById(`af-sum-np-${i}`)?.value || r.summary_np || '').trim(),
+      body: (document.getElementById(`af-body-en-${i}`)?.value || r.body_en || '').trim(), // Legacy fallback
+      body_en: (document.getElementById(`af-body-en-${i}`)?.value || r.body_en || '').trim(),
+      body_np: (document.getElementById(`af-body-np-${i}`)?.value || r.body_np || '').trim(),
       imageUrl: (document.getElementById(`af-img-${i}`)?.value || r.thumbnail || '').trim(),
       categoryLabel: r.category || 'World',
       tags: (document.getElementById(`af-tags-${i}`)?.value || '').split(',').map(t => t.trim()).filter(Boolean),
@@ -615,10 +900,31 @@ Output ONLY the body text, nothing else:`;
   },
 
   _setBusy: (busy) => {
-    const btn = document.getElementById('af-run-btn');
-    if (btn) {
-      btn.disabled = busy;
-      btn.textContent = busy ? 'Running pipeline…' : '⚡ Fetch & Summarize';
+    const runBtn = document.getElementById('af-run-btn');
+    const stopBtn = document.getElementById('af-stop-btn');
+    if (runBtn) {
+      runBtn.disabled = busy;
+      runBtn.textContent = busy ? 'Running pipeline…' : '⚡ Fetch & Summarize';
+    }
+    if (stopBtn) {
+      if (busy) {
+        stopBtn.classList.remove('hidden');
+        stopBtn.disabled = false;
+        stopBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="6" y="6" width="12" height="12"/></svg> Stop`;
+      } else {
+        stopBtn.classList.add('hidden');
+      }
+    }
+  },
+
+  stop: () => {
+    if (!AF.running) return;
+    AF.stopRequested = true;
+    AIFETCH._log('🛑 Stopping pipeline…');
+    const stopBtn = document.getElementById('af-stop-btn');
+    if (stopBtn) {
+      stopBtn.disabled = true;
+      stopBtn.textContent = 'Stopping…';
     }
   },
 

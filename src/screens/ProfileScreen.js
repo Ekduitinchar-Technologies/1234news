@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { auth, subscribeUserProfile, updateUserProfile, subscribeBookmarks, toggleSaveArticle, loginUser, registerUser, logoutUser } from '../services/firebaseService';
 import GlobalHeader from '../components/GlobalHeader';
 import { ALL_SOURCES, DEFAULT_ENABLED_IDS } from '../data/sources';
+import { LanguageContext } from '../context/LanguageContext';
 
 const colors = {
   background: '#f7f9fb',
@@ -41,7 +42,7 @@ export default function ProfileScreen({ navigation }) {
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [readingGoal, setReadingGoal] = useState(25);
   const [tags, setTags] = useState(['Tech', 'Politics', 'Sports', 'Science', 'Business', 'Art', 'Design']);
-  const [language, setLanguage] = useState('English (US)');
+  const { language, setLanguage, t } = React.useContext(LanguageContext);
   const [selectedSources, setSelectedSources] = useState(DEFAULT_ENABLED_IDS);
   const [userName, setUserName] = useState('Guest Reader');
   const [userAvatar, setUserAvatar] = useState('https://picsum.photos/seed/anon/100/100');
@@ -88,14 +89,18 @@ export default function ProfileScreen({ navigation }) {
   useEffect(() => {
     return subscribeBookmarks((bookmarks) => {
       setSavedIds(bookmarks.map(b => b.articleId));
-      setSavedArticles(bookmarks.map(b => ({
-        id: b.articleId,
-        title: b.title,
-        img: b.imageUrl,
-        time: new Date(b.savedAt || Date.now()).toLocaleDateString(),
-      })));
+      setSavedArticles(bookmarks.map(b => {
+        const isNepali = language?.includes('Nepali');
+        const displayTitle = isNepali ? (b.title_np || b.title) : (b.title_en || b.title);
+        return {
+          id: b.articleId,
+          title: displayTitle,
+          img: b.imageUrl,
+          time: new Date(b.savedAt || Date.now()).toLocaleDateString(),
+        };
+      }));
     });
-  }, []);
+  }, [language]);
 
   const handleUnsave = async (articleId) => {
     // Optimistic UI toggle
@@ -257,7 +262,7 @@ export default function ProfileScreen({ navigation }) {
             </View>
             <View style={styles.streakBadge}>
               <MaterialIcons name="menu-book" size={14} color={colors.white} />
-              <Text style={styles.streakText}>{stats.articlesRead} Reads</Text>
+              <Text style={styles.streakText}>{stats.articlesRead} {t('articlesRead')}</Text>
             </View>
           </View>
           <View style={styles.profileInfo}>
@@ -267,7 +272,7 @@ export default function ProfileScreen({ navigation }) {
             </TouchableOpacity>
             {!auth.currentUser || auth.currentUser.isAnonymous ? (
               <TouchableOpacity onPress={() => { setIsLoginMode(true); setAuthModalVisible(true); }}>
-                <Text style={[styles.profileEmail, { color: colors.primary, fontFamily: 'Inter_600SemiBold', textDecorationLine: 'underline' }]}>Sign In / Register</Text>
+                <Text style={[styles.profileEmail, { color: colors.primary, fontFamily: 'Inter_600SemiBold', textDecorationLine: 'underline' }]}>{t('logIn')}</Text>
               </TouchableOpacity>
             ) : (
               <Text style={styles.profileEmail}>{auth.currentUser?.email}</Text>
@@ -278,7 +283,7 @@ export default function ProfileScreen({ navigation }) {
         {/* Interests */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Interests</Text>
+            <Text style={styles.sectionTitle}>{t('interests')}</Text>
           </View>
           <View style={styles.chipContainer}>
             {tags.map((tag, i) => (
@@ -301,9 +306,9 @@ export default function ProfileScreen({ navigation }) {
         {/* Your Sources */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Your Sources</Text>
+            <Text style={styles.sectionTitle}>{t('sources')}</Text>
             <TouchableOpacity activeOpacity={0.7} onPress={() => setSourcesModalVisible(true)}>
-              <Text style={styles.editAction}>See more</Text>
+              <Text style={styles.editAction}>{t('seeMore')}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.sourcesGrid}>
@@ -333,16 +338,16 @@ export default function ProfileScreen({ navigation }) {
         {/* Saved News */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Saved News</Text>
+            <Text style={styles.sectionTitle}>{t('savedArticles')}</Text>
             <TouchableOpacity activeOpacity={0.7} onPress={() => setSavedNewsModalVisible(true)}>
-              <Text style={styles.editAction}>View all</Text>
+              <Text style={styles.editAction}>{t('viewAllProfile')}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.savedNewsList}>
             {savedArticles.length === 0 ? (
               <View style={styles.savedEmpty}>
                 <MaterialIcons name="bookmark-border" size={32} color={colors.onSurfaceVariant} />
-                <Text style={styles.savedEmptyText}>No saved articles yet.{"\n"}Bookmark articles on the home feed!</Text>
+                <Text style={styles.savedEmptyText}>{t('noSavedArticles')}</Text>
               </View>
             ) : (
               savedArticles.slice(0, 2).map(news => (
@@ -377,8 +382,8 @@ export default function ProfileScreen({ navigation }) {
         <View style={styles.goalSection}>
           <View style={styles.goalHeader}>
             <View>
-              <Text style={styles.goalTitle}>Reading Goal</Text>
-              <Text style={styles.goalSub}>Daily news consumption target</Text>
+              <Text style={styles.goalTitle}>{t('readingGoal')}</Text>
+              <Text style={styles.goalSub}>{t('readingGoalSub')}</Text>
             </View>
             <Text style={styles.goalValue}>{Math.round(readingGoal)}m</Text>
           </View>
@@ -404,14 +409,14 @@ export default function ProfileScreen({ navigation }) {
 
         {/* App Settings */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>Settings</Text>
+          <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>{t('settings')}</Text>
           <View style={styles.settingsBlock}>
             
             {/* Theme Toggle */}
             <View style={styles.settingRowItem}>
               <View style={styles.settingRowLeft}>
                 <MaterialIcons name="dark-mode" size={20} color={colors.onSurfaceVariant} />
-                <Text style={styles.settingLabel}>Appearance</Text>
+                <Text style={styles.settingLabel}>{t('appearance')}</Text>
               </View>
               <View style={styles.themeToggleBg}>
                 <TouchableOpacity style={[styles.themeBtn, !isDarkMode ? styles.themeBtnActive : null]} onPress={() => setIsDarkMode(false)}>
@@ -429,7 +434,7 @@ export default function ProfileScreen({ navigation }) {
             <TouchableOpacity style={styles.settingRowItem} activeOpacity={0.7} onPress={() => setLanguageModalVisible(true)}>
               <View style={styles.settingRowLeft}>
                 <MaterialIcons name="language" size={20} color={colors.onSurfaceVariant} />
-                <Text style={styles.settingLabel}>Language</Text>
+                <Text style={styles.settingLabel}>{t('languageSetting')}</Text>
               </View>
               <Text style={styles.settingValueText}>{language}</Text>
             </TouchableOpacity>
@@ -440,7 +445,7 @@ export default function ProfileScreen({ navigation }) {
             <View style={styles.settingRowItem}>
               <View style={styles.settingRowLeft}>
                 <MaterialIcons name="notifications-active" size={20} color={colors.onSurfaceVariant} />
-                <Text style={styles.settingLabel}>Breaking News Alerts</Text>
+                <Text style={styles.settingLabel}>{t('breakingNewsAlerts')}</Text>
               </View>
               <Switch 
                 value={alertsEnabled} 
@@ -522,7 +527,7 @@ export default function ProfileScreen({ navigation }) {
           <TouchableOpacity style={styles.bottomSheet} activeOpacity={1}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Select Language</Text>
-            {['English (US)', 'Nepali (नेपाली)', 'Spanish (ES)', 'French (FR)'].map((lang, idx) => (
+            {['English (US)', 'Nepali (नेपाली)'].map((lang, idx) => (
               <TouchableOpacity 
                 key={idx} 
                 style={styles.sheetOption} 

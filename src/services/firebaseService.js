@@ -216,7 +216,11 @@ export async function saveArticle(article) {
   await setDoc(ref, {
     articleId:  article.id,
     title:      article.title,
+    title_en:   article.title_en || '',
+    title_np:   article.title_np || '',
     summary:    article.summary || '',
+    summary_en: article.summary_en || '',
+    summary_np: article.summary_np || '',
     imageUrl:   article.imageUrl || '',
     categoryLabel: article.categoryLabel || '',
     savedAt:    serverTimestamp(),

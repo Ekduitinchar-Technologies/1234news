@@ -14,6 +14,7 @@ import GlobalHeader from '../components/GlobalHeader';
 import { auth, logBehaviour, getFeaturedArticles, toggleSaveArticle, subscribeBookmarks, isArticleSaved } from '../services/firebaseService';
 import { timeAgo } from '../utils/timeUtils';
 import { getSourceLogoByName } from '../data/sources';
+import { useLanguage } from '../context/LanguageContext';
 
 // ─────────────────────────────────────────────────────────────────
 // AI ASSISTANT — Gemini API Integration
@@ -72,7 +73,7 @@ Please provide complete detailed explanations (ideally 1 paragraph (less than 10
 // ─────────────────────────────────────────────────────────────────
 // AI Chat Modal Component
 // ─────────────────────────────────────────────────────────────────
-function AIAssistantModal({ visible, onClose, article }) {
+function AIAssistantModal({ visible, onClose, article, t }) {
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const scrollRef = useRef(null);
@@ -187,7 +188,7 @@ function AIAssistantModal({ visible, onClose, article }) {
                 <View style={aiStyles.assistantIcon}>
                   <MaterialIcons name="auto-awesome" size={18} color="rgba(255,255,255,0.85)" />
                 </View>
-                <Text style={aiStyles.headerTitle}>Ask AI</Text>
+                <Text style={aiStyles.headerTitle}>{t('askAI')}</Text>
               </View>
               <TouchableOpacity onPress={onClose} style={aiStyles.closeBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <MaterialIcons name="keyboard-arrow-down" size={26} color="rgba(255,255,255,0.7)" />
@@ -208,8 +209,8 @@ function AIAssistantModal({ visible, onClose, article }) {
                   <View style={aiStyles.introIconWrap}>
                     <MaterialIcons name="auto-awesome" size={28} color="rgba(255,255,255,0.85)" />
                   </View>
-                  <Text style={aiStyles.introHeading}>AI News Assistant</Text>
-                  <Text style={aiStyles.introSub}>I'm reading this article with you.</Text>
+                  <Text style={aiStyles.introHeading}>{t('aiNewsAssistant')}</Text>
+                  <Text style={aiStyles.introSub}>{t('aiReadingSubtitle')}</Text>
                   {article && (
                     <View style={aiStyles.articlePill}>
                       <MaterialIcons name="article" size={13} color="rgba(255,255,255,0.7)" />
@@ -268,7 +269,7 @@ function AIAssistantModal({ visible, onClose, article }) {
               <TextInput
                 ref={inputRef}
                 style={aiStyles.input}
-                placeholder="Ask anything…"
+                placeholder={t('askAnything')}
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={inputText}
                 onChangeText={setInputText}
@@ -310,13 +311,23 @@ export default function HomeScreen({ navigation }) {
   const flatListRef = useRef(null);
   const readSpecificArticleRef = useRef(null);
 
-  const [articles, setArticles] = useState([]);
+  const [dbArticles, setDbArticles] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+
+  const { language, t } = useLanguage();
+  const isNepali = language?.includes('Nepali');
+
+  const articles = React.useMemo(() => dbArticles.map(a => ({
+    ...a,
+    title: isNepali ? (a.title_np || a.title) : (a.title_en || a.title),
+    summary: isNepali ? (a.summary_np || a.summary) : (a.summary_en || a.summary),
+    body: isNepali ? (a.body_np || a.body) : (a.body_en || a.body),
+  })), [dbArticles, isNepali]);
 
   // Load featured articles on mount
   useEffect(() => {
     getFeaturedArticles().then(data => {
-      setArticles(data);
+      setDbArticles(data);
       setIsLoadingData(false);
       if (data.length > 0) {
         logBehaviour(data[0], 'read');
@@ -573,6 +584,7 @@ export default function HomeScreen({ navigation }) {
         visible={aiVisible}
         onClose={() => setAiVisible(false)}
         article={activeArticle}
+        t={t}
       />
     </View>
   );

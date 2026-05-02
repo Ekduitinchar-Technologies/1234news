@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "news69-ticker-api",
+  "routes": [
+    {
+      "src": "/api/tickers",
+      "dest": "/api/tickers.js"
+    }
+  ]
+}
