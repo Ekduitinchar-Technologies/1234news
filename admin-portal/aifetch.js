@@ -507,10 +507,10 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
   _llmText: async (prompt) => {
     let lastError = null;
 
-    // 1. Try mistral via openai-compat POST directly
+    // 1. Try mistral via POST directly
     for (let i = 0; i < 3; i++) {
       try {
-        const res = await fetch('https://text.pollinations.ai/openai', {
+        const res = await fetch(AI_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -520,8 +520,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
           }),
         });
         if (res.ok) {
-          const json = await res.json();
-          const t = json?.choices?.[0]?.message?.content || '';
+          const t = await res.text();
           if (t && t.length > 50) return t;
         }
         throw new Error(`HTTP ${res.status}`);
@@ -533,7 +532,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
 
     // 2. Fallback to proxy
     try {
-      const url = `https://corsproxy.io/?${encodeURIComponent('https://text.pollinations.ai/openai')}`;
+      const url = `https://corsproxy.io/?${encodeURIComponent(AI_URL)}`;
       const res2 = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -544,8 +543,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
         }),
       });
       if (res2.ok) {
-        const json = await res2.json();
-        const t = json?.choices?.[0]?.message?.content || '';
+        const t = await res2.text();
         if (t && t.length > 50) return t;
       }
       throw new Error(`Proxy HTTP ${res2.status}`);
