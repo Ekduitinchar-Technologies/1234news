@@ -334,8 +334,23 @@ Reply ONLY with valid JSON (no markdown):
 }`;
 
     const metaRaw = await AIFETCH._llm(metaPrompt);
-    const meta = AIFETCH._json(metaRaw);
-    
+    let meta = AIFETCH._json(metaRaw);
+
+    // Retry meta once if summary_en came back empty or too short
+    if (!meta.summary_en || AIFETCH._wc(meta.summary_en) < 20) {
+      AIFETCH._log(`↻ Retrying meta for "${cluster.topic}" (summary was empty)...`);
+      await AIFETCH._sleep(3000);
+      try {
+        const metaRaw2 = await AIFETCH._llm(metaPrompt);
+        const meta2 = AIFETCH._json(metaRaw2);
+        if (meta2.summary_en && AIFETCH._wc(meta2.summary_en) > AIFETCH._wc(meta.summary_en || '')) {
+          meta = meta2;
+        }
+      } catch (e) {
+        AIFETCH._log(`⚠ Meta retry failed: ${e.message}`);
+      }
+    }
+
     await AIFETCH._sleep(2000); // Sleep to avoid rate limiting before generating body
 
     // ── Step 2: full article body (Plain Text) ───────────────────
@@ -355,16 +370,40 @@ CRITICAL INSTRUCTIONS:
 
     let body_en = '';
     let body_np = '';
+
+    // Generate English body — independent try/catch so a Nepali failure can't erase EN content
     try {
       const bodyRawEn = await AIFETCH._llmText(bodyPromptEn);
-      await AIFETCH._sleep(2000); // Sleep to avoid rate limiting
-      const bodyRawNp = await AIFETCH._llmText(bodyPromptNp);
-
       body_en = AIFETCH._extractBody(bodyRawEn) || bodyRawEn.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
+    } catch (e) {
+      AIFETCH._log(`⚠ English body generation failed: ${e.message}`);
+    }
+
+    await AIFETCH._sleep(2500); // gap between EN and NP to avoid 429
+
+    // Generate Nepali body — independent try/catch
+    try {
+      const bodyRawNp = await AIFETCH._llmText(bodyPromptNp);
       body_np = AIFETCH._extractBody(bodyRawNp) || bodyRawNp.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
     } catch (e) {
-      AIFETCH._log(`⚠ Body generation failed: ${e.message}`);
+      AIFETCH._log(`⚠ Nepali body generation failed: ${e.message}`);
     }
+
+    // If English body is still empty, retry once with a longer sleep
+    if (!body_en || AIFETCH._wc(body_en) < 100) {
+      AIFETCH._log(`↻ Retrying English body for "${cluster.topic}"...`);
+      await AIFETCH._sleep(4000);
+      try {
+        const retryRaw = await AIFETCH._llmText(bodyPromptEn);
+        const retryBody = AIFETCH._extractBody(retryRaw) || retryRaw.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
+        if (AIFETCH._wc(retryBody) > AIFETCH._wc(body_en)) body_en = retryBody;
+      } catch (e) {
+        AIFETCH._log(`⚠ English body retry also failed: ${e.message}`);
+      }
+    }
+
+    // Final fallback: use English body for Nepali if Nepali is still empty
+    if (!body_np) body_np = body_en;
 
     // Log a warning if word counts are off for English
     const wS = AIFETCH._wc(meta.summary_en || '');
@@ -445,9 +484,9 @@ CRITICAL INSTRUCTIONS:
       category: meta.category || 'World',
       tags: meta.tags || [],
       summary_en: meta.summary_en || meta.summary || '',
-      summary_np: meta.summary_np || '',
+      summary_np: meta.summary_np || meta.summary_en || meta.summary || '',
       body_en: body_en,
-      body_np: body_np,
+      body_np: body_np || body_en, // fallback to EN if NP is blank
       sources: arts.map(a => ({ name: a.sourceName, url: a.link || a.sourceUrl, logo: a.sourceLogo || '' })),
       imageUrl: highResImage, // Primary high-quality image
       thumbnail: highResImage, // Fallback for components using 'thumbnail'
