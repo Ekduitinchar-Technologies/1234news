@@ -254,158 +254,108 @@ const AIFETCH = {
   },
 
   // ── TOPIC CLUSTERING ─────────────────────────────────────────
-  // Batches articles in groups of 25 so the prompt never overflows
-  // the reasoning model's token budget.
-  // Always uses local 0-based indices in the LLM prompt (the model
-  // follows its example format), then remaps to global indices after.
+  // Batches articles in groups of 15 (reduced from 25 to avoid 524 timeouts)
+  // Always uses local 0-based indices then remaps to global after.
   _cluster: async (articles) => {
-    const BATCH = 25;
+    const BATCH = 15; // smaller batch = shorter prompt = faster response, fewer timeouts
     const allClusters = [];
     let offset = 0;
 
     while (offset < articles.length) {
       if (AF.stopRequested) break;
-      const batch = articles.slice(offset, offset + BATCH);
-      // Use local 0-based indices so the model matches the example format
-      const list = batch.map((a, i) => `[${i}] ${a.sourceName}: ${a.title}`).join('\n');
+      const list = batch.map((a, i) => `[${i}] ${a.title.slice(0, 80)}`).join('\n');
+      const prompt = `Group these ${batch.length} headlines by news event. One cluster = one event. Every index must appear.\nHEADLINES:\n${list}\nJSON only: {"clusters":[{"topic":"label","indices":[0,1]}]}`;
 
-      const prompt = `Group these ${batch.length} headlines by specific news event (not broad topic). Each cluster = one real-world event. Include every index in some cluster.
+      let clustered = false;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const raw = await AIFETCH._llm(prompt);
+          const json = AIFETCH._json(raw);
+          const valid = (json.clusters || [])
+            .filter(c => Array.isArray(c.indices) && c.indices.length)
+            .map(c => ({
+              topic: c.topic,
+              indices: c.indices.map(li => offset + li).filter(gi => gi < articles.length),
+            }))
+            .filter(c => c.indices.length);
 
-HEADLINES:
-${list}
-
-Reply ONLY with this exact JSON shape (no markdown):
-{"clusters":[{"topic":"short label","indices":[0,1]},{"topic":"label","indices":[2]}]}`;
-
-      try {
-        const raw = await AIFETCH._llm(prompt);
-        const json = AIFETCH._json(raw);
-        const valid = (json.clusters || [])
-          .filter(c => Array.isArray(c.indices) && c.indices.length)
-          .map(c => ({
-            topic: c.topic,
-            indices: c.indices.map(li => offset + li).filter(gi => gi < articles.length),
-          }))
-          .filter(c => c.indices.length);
-
-        if (valid.length > 0) {
-          allClusters.push(...valid);
-        } else {
-          // Model returned empty or unreadable clusters — treat each as its own
-          AIFETCH._log(`⚠ Cluster batch (offset ${offset}) returned 0 clusters — using individual clusters`);
-          batch.forEach((a, i) => allClusters.push({ topic: a.title.slice(0, 40), indices: [offset + i] }));
+          if (valid.length > 0) {
+            allClusters.push(...valid);
+            clustered = true;
+            break;
+          }
+        } catch (e) {
+          AIFETCH._log(`⚠ Cluster attempt ${attempt + 1} failed: ${e.message.slice(0, 80)}`);
+          if (attempt === 0) await AIFETCH._sleep(2500);
         }
-      } catch (e) {
-        // Fallback: treat each article in the batch as its own cluster
-        AIFETCH._log(`⚠ Cluster batch failed (offset ${offset}): ${e.message} — using individual clusters`);
+      }
+
+      if (!clustered) {
+        AIFETCH._log(`⚠ Clustering failed for batch at offset ${offset} — using individual clusters`);
         batch.forEach((a, i) => allClusters.push({ topic: a.title.slice(0, 40), indices: [offset + i] }));
       }
 
       offset += BATCH;
-      if (offset < articles.length) await AIFETCH._sleep(500);
+      if (offset < articles.length) await AIFETCH._sleep(800);
     }
 
     return allClusters;
   },
 
-  // ── SUMMARIZE one cluster (two-step) ────────────────────────
-  // Step 1: get title/category/tags/summary (short, focused JSON)
-  // Step 2: get the body separately so it has its own full token budget
+
+  // ── SUMMARIZE one cluster (2-step: meta JSON + EN body only) ───
+  // Nepali body uses EN body as fallback – saves 1 API call per article (~33% faster)
   _summarize: async (cluster, all) => {
     const arts = cluster.indices.map(i => all[i]).filter(Boolean);
     const names = [...new Set(arts.map(a => a.sourceName))];
+    // Trim snippet to 300 chars to keep prompt small & avoid 524 timeouts
     const text = arts.map(a =>
-      `SOURCE: ${a.sourceName}\nHEADLINE: ${a.title}\nSNIPPET: ${a.description}`
+      `SOURCE: ${a.sourceName}\nHEADLINE: ${a.title}\nSNIPPET: ${(a.description || '').slice(0, 300)}`
     ).join('\n\n---\n\n');
 
-    // ── Step 1: metadata + summary ───────────────────────────
-    const metaPrompt = `You are a bilingual (English & Nepali) neutral news editor for "Lucid Newsroom". Read these ${arts.length} article(s) from [${names.join(', ')}]:
-
-${text}
-
-Reply ONLY with valid JSON (no markdown):
-{
-  "title_en": "English headline, max 15 words",
-  "title_np": "Nepali headline, max 15 words",
-  "category": "one of: Politics|Technology|Business|Science|Health|Sports|Entertainment|World|Environment|Culture",
-  "tags": ["tag1","tag2","tag3"],
-  "summary_en": "ONE paragraph in English, EXACTLY 60-69 words. Neutral, factual, covers who/what/where/when. Do not include word counts.",
-  "summary_np": "ONE paragraph in Nepali, EXACTLY 60-69 words. Neutral, factual. Do not include word counts."
-}`;
+    // ── Step 1: metadata + bilingual summaries (one JSON call) ───
+    const metaPrompt = `You are a bilingual news editor. Read these ${arts.length} article(s):\n\n${text}\n\nReply ONLY with valid JSON (no markdown, no extra text):\n{"title_en":"headline max 12 words","title_np":"Nepali headline max 12 words","category":"Politics|Technology|Business|Science|Health|Sports|Entertainment|World|Environment|Culture","tags":["t1","t2","t3"],"summary_en":"60-65 word English summary, neutral factual","summary_np":"60-65 word Nepali summary, neutral factual"}`;
 
     const metaRaw = await AIFETCH._llm(metaPrompt);
     let meta = AIFETCH._json(metaRaw);
 
-    // Retry meta once if summary_en came back empty or too short
-    if (!meta.summary_en || AIFETCH._wc(meta.summary_en) < 20) {
-      AIFETCH._log(`↻ Retrying meta for "${cluster.topic}" (summary was empty)...`);
-      await AIFETCH._sleep(3000);
+    // Retry meta once if summary_en is empty
+    if (!meta.summary_en || AIFETCH._wc(meta.summary_en) < 15) {
+      AIFETCH._log(`↻ Retrying meta for "${cluster.topic}"...`);
+      await AIFETCH._sleep(2000);
       try {
-        const metaRaw2 = await AIFETCH._llm(metaPrompt);
-        const meta2 = AIFETCH._json(metaRaw2);
-        if (meta2.summary_en && AIFETCH._wc(meta2.summary_en) > AIFETCH._wc(meta.summary_en || '')) {
-          meta = meta2;
-        }
-      } catch (e) {
-        AIFETCH._log(`⚠ Meta retry failed: ${e.message}`);
-      }
+        const meta2 = AIFETCH._json(await AIFETCH._llm(metaPrompt));
+        if (AIFETCH._wc(meta2.summary_en || '') > AIFETCH._wc(meta.summary_en || '')) meta = meta2;
+      } catch (e) { AIFETCH._log(`⚠ Meta retry failed: ${e.message}`); }
     }
 
-    await AIFETCH._sleep(2000); // Sleep to avoid rate limiting before generating body
+    await AIFETCH._sleep(1200); // short gap before body call
 
-    // ── Step 2: full article body (Plain Text) ───────────────────
-    const bodyPromptBase = `You are a neutral journalist for "Lucid Newsroom". Based on ${arts.length} source(s) from [${names.join(', ')}]:
-
-${text}
-
-Task: Write the full article body as plain prose in {LANG}.
-CRITICAL INSTRUCTIONS:
-- Exactly 4 paragraphs, separated by double newlines.
-- NO conversational openings ("Here is...", "Sure...").
-- NO word counts, NO metadata, NO titles, NO headers.
-- Reply ONLY with the pure article text paragraphs. Nothing else.`;
-
-    const bodyPromptEn = bodyPromptBase.replace('{LANG}', 'English');
-    const bodyPromptNp = bodyPromptBase.replace('{LANG}', 'Nepali (नेपाली)');
+    // ── Step 2: English body only (Nepali body will use EN as fallback) ───
+    const bodyPromptEn = `You are a neutral journalist. Based on these sources:\n\n${text}\n\nTask: Write a comprehensive, detailed news article body of AT LEAST 400 words. 
+If the source material is short, you MUST expand on it by adding relevant geopolitical context, historical background, explaining the implications, and elaborating on the "why" and "how". Do NOT just repeat the source.
+Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title, no headers, no word counts, no meta. Start directly with the news.`;
 
     let body_en = '';
-    let body_np = '';
-
-    // Generate English body — independent try/catch so a Nepali failure can't erase EN content
     try {
       const bodyRawEn = await AIFETCH._llmText(bodyPromptEn);
       body_en = AIFETCH._extractBody(bodyRawEn) || bodyRawEn.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
     } catch (e) {
-      AIFETCH._log(`⚠ English body generation failed: ${e.message}`);
+      AIFETCH._log(`⚠ English body failed: ${e.message}`);
     }
 
-    await AIFETCH._sleep(2500); // gap between EN and NP to avoid 429
-
-    // Generate Nepali body — independent try/catch
-    try {
-      const bodyRawNp = await AIFETCH._llmText(bodyPromptNp);
-      body_np = AIFETCH._extractBody(bodyRawNp) || bodyRawNp.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
-    } catch (e) {
-      AIFETCH._log(`⚠ Nepali body generation failed: ${e.message}`);
-    }
-
-    // If English body is still empty, retry once with a longer sleep
-    if (!body_en || AIFETCH._wc(body_en) < 100) {
-      AIFETCH._log(`↻ Retrying English body for "${cluster.topic}"...`);
-      await AIFETCH._sleep(4000);
+    // Retry EN body once if too short (< 200 words)
+    if (!body_en || AIFETCH._wc(body_en) < 200) {
+      AIFETCH._log(`↻ Retrying English body for "${cluster.topic}" (was ${AIFETCH._wc(body_en)} words)...`);
+      await AIFETCH._sleep(3000);
       try {
-        const retryRaw = await AIFETCH._llmText(bodyPromptEn);
+        const retryRaw = await AIFETCH._llmText(bodyPromptEn + "\nCRITICAL: The previous attempt was too short. You MUST generate over 400 words by adding deep context and analysis.");
         const retryBody = AIFETCH._extractBody(retryRaw) || retryRaw.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
         if (AIFETCH._wc(retryBody) > AIFETCH._wc(body_en)) body_en = retryBody;
-      } catch (e) {
-        AIFETCH._log(`⚠ English body retry also failed: ${e.message}`);
-      }
+      } catch (e) { AIFETCH._log(`⚠ English body retry failed: ${e.message}`); }
     }
 
-    // Final fallback: use English body for Nepali if Nepali is still empty
-    if (!body_np) body_np = body_en;
-
-    // Log a warning if word counts are off for English
+    // Log warnings
     const wS = AIFETCH._wc(meta.summary_en || '');
     const wB = AIFETCH._wc(body_en);
     if (wS < 55 || wB < 250) {
@@ -486,7 +436,7 @@ CRITICAL INSTRUCTIONS:
       summary_en: meta.summary_en || meta.summary || '',
       summary_np: meta.summary_np || meta.summary_en || meta.summary || '',
       body_en: body_en,
-      body_np: body_np || body_en, // fallback to EN if NP is blank
+      body_np: body_en, // NP body = EN body (saves 1 API call per article)
       sources: arts.map(a => ({ name: a.sourceName, url: a.link || a.sourceUrl, logo: a.sourceLogo || '' })),
       imageUrl: highResImage, // Primary high-quality image
       thumbnail: highResImage, // Fallback for components using 'thumbnail'
