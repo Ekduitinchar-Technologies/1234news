@@ -263,6 +263,7 @@ const AIFETCH = {
 
     while (offset < articles.length) {
       if (AF.stopRequested) break;
+      const batch = articles.slice(offset, offset + BATCH);
       const list = batch.map((a, i) => `[${i}] ${a.title.slice(0, 80)}`).join('\n');
       const prompt = `Group these ${batch.length} headlines by news event. One cluster = one event. Every index must appear.\nHEADLINES:\n${list}\nJSON only: {"clusters":[{"topic":"label","indices":[0,1]}]}`;
 
