@@ -254,133 +254,128 @@ const AIFETCH = {
   },
 
   // ── TOPIC CLUSTERING ─────────────────────────────────────────
-  // Batches articles in groups of 15 (reduced from 25 to avoid 524 timeouts)
-  // Always uses local 0-based indices then remaps to global after.
+  // Batches articles in groups of 25 so the prompt never overflows
+  // the reasoning model's token budget.
+  // Always uses local 0-based indices in the LLM prompt (the model
+  // follows its example format), then remaps to global indices after.
   _cluster: async (articles) => {
-    const BATCH = 15; // smaller batch = shorter prompt = faster response, fewer timeouts
+    const BATCH = 25;
     const allClusters = [];
     let offset = 0;
 
     while (offset < articles.length) {
       if (AF.stopRequested) break;
       const batch = articles.slice(offset, offset + BATCH);
-      const list = batch.map((a, i) => `[${i}] ${a.title.slice(0, 80)}`).join('\n');
-      const prompt = `Group these ${batch.length} headlines by news event. One cluster = one event. Every index must appear.\nHEADLINES:\n${list}\nJSON only: {"clusters":[{"topic":"label","indices":[0,1]}]}`;
+      // Use local 0-based indices so the model matches the example format
+      const list = batch.map((a, i) => `[${i}] ${a.sourceName}: ${a.title}`).join('\n');
 
-      let clustered = false;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const raw = await AIFETCH._llm(prompt);
-          const json = AIFETCH._json(raw);
-          const valid = (json.clusters || [])
-            .filter(c => Array.isArray(c.indices) && c.indices.length)
-            .map(c => ({
-              topic: c.topic,
-              indices: c.indices.map(li => offset + li).filter(gi => gi < articles.length),
-            }))
-            .filter(c => c.indices.length);
+      const prompt = `Group these ${batch.length} headlines by specific news event (not broad topic). Each cluster = one real-world event. Include every index in some cluster.
 
-          if (valid.length > 0) {
-            allClusters.push(...valid);
-            clustered = true;
-            break;
-          }
-        } catch (e) {
-          AIFETCH._log(`⚠ Cluster attempt ${attempt + 1} failed: ${e.message.slice(0, 80)}`);
-          if (attempt === 0) await AIFETCH._sleep(2500);
+HEADLINES:
+${list}
+
+Reply ONLY with this exact JSON shape (no markdown):
+{"clusters":[{"topic":"short label","indices":[0,1]},{"topic":"label","indices":[2]}]}`;
+
+      try {
+        const raw = await AIFETCH._llm(prompt);
+        const json = AIFETCH._json(raw);
+        const valid = (json.clusters || [])
+          .filter(c => Array.isArray(c.indices) && c.indices.length)
+          .map(c => ({
+            topic: c.topic,
+            indices: c.indices.map(li => offset + li).filter(gi => gi < articles.length),
+          }))
+          .filter(c => c.indices.length);
+
+        if (valid.length > 0) {
+          allClusters.push(...valid);
+        } else {
+          // Model returned empty or unreadable clusters — treat each as its own
+          AIFETCH._log(`⚠ Cluster batch (offset ${offset}) returned 0 clusters — using individual clusters`);
+          batch.forEach((a, i) => allClusters.push({ topic: a.title.slice(0, 40), indices: [offset + i] }));
         }
-      }
-
-      if (!clustered) {
-        AIFETCH._log(`⚠ Clustering failed for batch at offset ${offset} — using individual clusters`);
+      } catch (e) {
+        // Fallback: treat each article in the batch as its own cluster
+        AIFETCH._log(`⚠ Cluster batch failed (offset ${offset}): ${e.message} — using individual clusters`);
         batch.forEach((a, i) => allClusters.push({ topic: a.title.slice(0, 40), indices: [offset + i] }));
       }
 
       offset += BATCH;
-      if (offset < articles.length) await AIFETCH._sleep(800);
+      if (offset < articles.length) await AIFETCH._sleep(500);
     }
 
     return allClusters;
   },
 
-
-  // ── SUMMARIZE one cluster (2-step: meta JSON + EN body only) ───
-  // Nepali body uses EN body as fallback – saves 1 API call per article (~33% faster)
+  // ── SUMMARIZE one cluster (two-step) ────────────────────────
+  // Step 1: get title/category/tags/summary (short, focused JSON)
+  // Step 2: get the body separately so it has its own full token budget
   _summarize: async (cluster, all) => {
     const arts = cluster.indices.map(i => all[i]).filter(Boolean);
     const names = [...new Set(arts.map(a => a.sourceName))];
-    // Trim snippet to 300 chars to keep prompt small & avoid 524 timeouts
     const text = arts.map(a =>
-      `SOURCE: ${a.sourceName}\nHEADLINE: ${a.title}\nSNIPPET: ${(a.description || '').slice(0, 300)}`
+      `SOURCE: ${a.sourceName}\nHEADLINE: ${a.title}\nSNIPPET: ${a.description}`
     ).join('\n\n---\n\n');
 
-    // ── Step 1: metadata + bilingual summaries (one JSON call) ───
-    const metaPrompt = `You are a bilingual news editor. Read these ${arts.length} article(s):\n\n${text}\n\nReply ONLY with valid JSON (no markdown, no extra text):\n{"title_en":"headline max 12 words","title_np":"Nepali headline max 12 words","category":"Politics|Technology|Business|Science|Health|Sports|Entertainment|World|Environment|Culture","tags":["t1","t2","t3"],"summary_en":"60-65 word English summary, neutral factual","summary_np":"60-65 word Nepali summary, neutral factual"}`;
+    // ── Step 1: metadata + summary ───────────────────────────
+    const metaPrompt = `You are a bilingual (English & Nepali) neutral news editor for "Lucid Newsroom". Read these ${arts.length} article(s) from [${names.join(', ')}]:
+
+${text}
+
+Reply ONLY with valid JSON (no markdown):
+{
+  "title_en": "English headline, max 15 words",
+  "title_np": "Nepali headline, max 15 words",
+  "category": "one of: Politics|Technology|Business|Science|Health|Sports|Entertainment|World|Environment|Culture",
+  "tags": ["tag1","tag2","tag3"],
+  "summary_en": "ONE paragraph in English, EXACTLY 60-69 words. Neutral, factual, covers who/what/where/when. Do not include word counts.",
+  "summary_np": "ONE paragraph in Nepali, EXACTLY 60-69 words. Neutral, factual. Do not include word counts."
+}`;
 
     const metaRaw = await AIFETCH._llm(metaPrompt);
-    let meta = AIFETCH._json(metaRaw);
+    const meta = AIFETCH._json(metaRaw);
 
-    // Retry meta once if summary_en is empty
-    if (!meta.summary_en || AIFETCH._wc(meta.summary_en) < 15) {
-      AIFETCH._log(`↻ Retrying meta for "${cluster.topic}"...`);
-      await AIFETCH._sleep(2000);
-      try {
-        const meta2 = AIFETCH._json(await AIFETCH._llm(metaPrompt));
-        if (AIFETCH._wc(meta2.summary_en || '') > AIFETCH._wc(meta.summary_en || '')) meta = meta2;
-      } catch (e) { AIFETCH._log(`⚠ Meta retry failed: ${e.message}`); }
-    }
+    await AIFETCH._sleep(2000); // Sleep to avoid rate limiting before generating body
 
-    await AIFETCH._sleep(1200); // short gap before body call
+    // ── Step 2: full article body (Plain Text) ───────────────────
+    const bodyPromptBase = `You are a neutral journalist for "Lucid Newsroom". Based on ${arts.length} source(s) from [${names.join(', ')}]:
 
-    // ── Step 2: English body only (Nepali body will use EN as fallback) ───
-    const bodyPromptEn = `You are a neutral journalist. Based on these sources:\n\n${text}\n\nTask: Write a comprehensive, detailed news article body of AT LEAST 400 words. 
-If the source material is short, you MUST expand on it by adding relevant geopolitical context, historical background, explaining the implications, and elaborating on the "why" and "how". Do NOT just repeat the source.
-Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title, no headers, no word counts, no meta. Start directly with the news.`;
+${text}
+
+Task: Write the full article body as plain prose in {LANG}.
+CRITICAL INSTRUCTIONS:
+- Exactly 4 paragraphs, separated by double newlines.
+- NO conversational openings ("Here is...", "Sure...").
+- NO word counts, NO metadata, NO titles, NO headers.
+- Reply ONLY with the pure article text paragraphs. Nothing else.`;
+
+    const bodyPromptEn = bodyPromptBase.replace('{LANG}', 'English');
+    const bodyPromptNp = bodyPromptBase.replace('{LANG}', 'Nepali (नेपाली)');
 
     let body_en = '';
-    try {
-      const bodyRawEn = await AIFETCH._llmText(bodyPromptEn);
-      body_en = AIFETCH._extractBody(bodyRawEn) || bodyRawEn.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
-    } catch (e) {
-      AIFETCH._log(`⚠ English body failed: ${e.message}`);
-    }
-
-    // Retry EN body once if too short (< 200 words)
-    if (!body_en || AIFETCH._wc(body_en) < 200) {
-      AIFETCH._log(`↻ Retrying English body for "${cluster.topic}" (was ${AIFETCH._wc(body_en)} words)...`);
-      await AIFETCH._sleep(3000);
-      try {
-        const retryRaw = await AIFETCH._llmText(bodyPromptEn + "\nCRITICAL: The previous attempt was too short. You MUST generate over 400 words by adding deep context and analysis.");
-        const retryBody = AIFETCH._extractBody(retryRaw) || retryRaw.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
-        if (AIFETCH._wc(retryBody) > AIFETCH._wc(body_en)) body_en = retryBody;
-      } catch (e) { AIFETCH._log(`⚠ English body retry failed: ${e.message}`); }
-    }
-
-    await AIFETCH._sleep(2500);
-
-    // ── Step 3: Nepali body ───
-    const bodyPromptNp = `You are a neutral journalist. Based on these sources:\n\n${text}\n\nTask: Write a comprehensive, detailed news article body of AT LEAST 400 words in Nepali (नेपाली). 
-If the source material is short, you MUST expand on it by adding relevant geopolitical context, historical background, explaining the implications, and elaborating on the "why" and "how". Do NOT just repeat the source.
-Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title, no headers, no word counts, no meta. Start directly with the news in Nepali.`;
-
     let body_np = '';
     try {
+      const bodyRawEn = await AIFETCH._llmText(bodyPromptEn);
+      await AIFETCH._sleep(2000); // Sleep to avoid rate limiting
       const bodyRawNp = await AIFETCH._llmText(bodyPromptNp);
+
+      body_en = AIFETCH._extractBody(bodyRawEn) || bodyRawEn.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
       body_np = AIFETCH._extractBody(bodyRawNp) || bodyRawNp.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
     } catch (e) {
-      AIFETCH._log(`⚠ Nepali body failed: ${e.message}`);
+      AIFETCH._log(`⚠ Body generation failed: ${e.message}`);
     }
 
-    // Log warnings
+    // Log a warning if word counts are off for English
     const wS = AIFETCH._wc(meta.summary_en || '');
     const wB = AIFETCH._wc(body_en);
     if (wS < 55 || wB < 250) {
       AIFETCH._log(`⚠ Word count low for "${cluster.topic}": summary_en=${wS} words, body_en=${wB} words`);
     }
 
-    // ── Step 4: Fetch High-Res Image from Source ────────────
+    // ── Step 3: Fetch High-Res Image from Source ────────────
     let highResImage = arts.find(a => a.thumbnail)?.thumbnail || '';
-    
+
     // Attempt to scrape High-Res Image for the main article in the cluster
     if (arts[0]?.link) {
       const tryScrape = async (proxyBase, isJsonProxy) => {
@@ -388,7 +383,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
           const proxyUrl = proxyBase + encodeURIComponent(arts[0].link);
           const imgRes = await fetch(proxyUrl);
           if (!imgRes.ok) return null;
-          
+
           let html = '';
           if (isJsonProxy) {
             const imgJson = await imgRes.json();
@@ -396,7 +391,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
           } else {
             html = await imgRes.text();
           }
-          
+
           // Support multiple meta tags and common class patterns (OnlineKhabar uses post-thumbnail)
           const matches = [
             html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i),
@@ -439,7 +434,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
           try {
             const urlObj = new URL(arts[0].link);
             highResImage = urlObj.origin + (highResImage.startsWith('/') ? '' : '/') + highResImage;
-          } catch(e) {}
+          } catch (e) { }
         }
       }
     }
@@ -450,9 +445,9 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
       category: meta.category || 'World',
       tags: meta.tags || [],
       summary_en: meta.summary_en || meta.summary || '',
-      summary_np: meta.summary_np || meta.summary_en || meta.summary || '',
+      summary_np: meta.summary_np || '',
       body_en: body_en,
-      body_np: body_np || body_en, // fallback to EN if NP is blank
+      body_np: body_np,
       sources: arts.map(a => ({ name: a.sourceName, url: a.link || a.sourceUrl, logo: a.sourceLogo || '' })),
       imageUrl: highResImage, // Primary high-quality image
       thumbnail: highResImage, // Fallback for components using 'thumbnail'
@@ -461,33 +456,14 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
   },
 
   // ── AI REST CALL (Free Keyless API) ──────────────────────────
+  // NOTE: pollinations.ai uses a reasoning LLM (gpt-oss-20b). Without a high
+  // max_tokens budget the model exhausts its limit mid-reasoning and returns an
+  // empty `content` field. We also request low reasoning effort so it doesn't
+  // blow most of the budget on chain-of-thought before producing JSON.
   _llm: async (prompt) => {
-    let lastError = null;
-
-    // Try direct POST first (supports jsonMode and large prompts)
-    for (let i = 0; i < 3; i++) {
-      try {
-        const res = await fetch(AI_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.1,
-            jsonMode: true,
-          }),
-        });
-        if (res.ok) return await res.text();
-        throw new Error(`HTTP ${res.status}`);
-      } catch (e) {
-        lastError = e;
-        await AIFETCH._sleep(1500 * (i + 1)); // backoff
-      }
-    }
-
-    // Fallback to proxy if direct POST fails repeatedly (CORS/502)
+    // 1. Try POST first (supports jsonMode and large prompts)
     try {
-      const url = `https://corsproxy.io/?${encodeURIComponent(AI_URL)}`;
-      const res2 = await fetch(url, {
+      const res = await fetch(AI_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -496,60 +472,62 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
           jsonMode: true,
         }),
       });
-      if (res2.ok) return await res2.text();
-      throw new Error(`Proxy HTTP ${res2.status}`);
+      if (res.ok) return await res.text();
     } catch (e) {
-      throw new Error(`AI API JSON Failed after retries: ${lastError?.message || e.message}`);
+      console.warn('POST failed, trying GET fallback...', e);
     }
+
+    // 2. Fallback to GET for simple text extraction (ignores jsonMode)
+    const encoded = encodeURIComponent(prompt.slice(0, 2000));
+    const res2 = await fetch(`${AI_URL}${encoded}?model=openai&json=true`);
+    if (!res2.ok) {
+      const err = await res2.text();
+      throw new Error(`AI API ${res2.status}: ${err.slice(0, 100)}`);
+    }
+    return await res2.text();
   },
 
   // ── AI TEXT CALL (uses mistral to avoid reasoning wrappers) ──
   _llmText: async (prompt) => {
-    let lastError = null;
-
-    // 1. Try mistral via POST directly
-    for (let i = 0; i < 3; i++) {
-      try {
-        const res = await fetch(AI_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'mistral',
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.3,
-          }),
-        });
-        if (res.ok) {
-          const t = await res.text();
-          if (t && t.length > 50) return t;
-        }
-        throw new Error(`HTTP ${res.status}`);
-      } catch (e) {
-        lastError = e;
-        await AIFETCH._sleep(1500 * (i + 1)); // backoff
-      }
-    }
-
-    // 2. Fallback to proxy
+    // 1. Try mistral via openai-compat POST
     try {
-      const url = `https://corsproxy.io/?${encodeURIComponent(AI_URL)}`;
-      const res2 = await fetch(url, {
+      const res = await fetch('https://text.pollinations.ai/openai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'mistral',
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.3,
+          temperature: 0.5,
         }),
       });
-      if (res2.ok) {
-        const t = await res2.text();
-        if (t && t.length > 50) return t;
+      if (res.ok) {
+        const json = await res.json();
+        const t = json?.choices?.[0]?.message?.content || '';
+        if (t && t.length > 100) return t;
       }
-      throw new Error(`Proxy HTTP ${res2.status}`);
-    } catch (e) {
-      throw new Error(`AI API Text Failed after retries: ${lastError?.message || e.message}`);
+    } catch (_) { }
+
+    // 2. Try plain text POST
+    try {
+      const res2 = await fetch(AI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.5,
+        }),
+      });
+      if (res2.ok) return await res2.text();
+    } catch (_) { }
+
+    // 3. Last resort: simple GET (best for CORS)
+    const encoded = encodeURIComponent(prompt.slice(0, 2000));
+    const res3 = await fetch(`${AI_URL}${encoded}?model=mistral`);
+    if (!res3.ok) {
+      const err = await res3.text();
+      throw new Error(`AI API (text) ${res3.status}: ${err.slice(0, 100)}`);
     }
+    return await res3.text();
   },
 
   // ── REPAIR TRUNCATED JSON ─────────────────────────────────────
@@ -568,11 +546,11 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
       const lastQuote = repaired.lastIndexOf('"');
       const lastOpenBrace = repaired.lastIndexOf('{');
       const lastOpenBracket = repaired.lastIndexOf('[');
-      
+
       // Heuristic: if a quote is open but not closed
       let quoteCount = 0;
       for (let i = 0; i < repaired.length; i++) {
-        if (repaired[i] === '"' && (i === 0 || repaired[i-1] !== '\\')) quoteCount++;
+        if (repaired[i] === '"' && (i === 0 || repaired[i - 1] !== '\\')) quoteCount++;
       }
       if (quoteCount % 2 !== 0) repaired += '"';
     }
@@ -581,10 +559,10 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
     let stack = [];
     for (let i = 0; i < repaired.length; i++) {
       const char = repaired[i];
-      const prev = i > 0 ? repaired[i-1] : '';
+      const prev = i > 0 ? repaired[i - 1] : '';
       if (char === '"' && prev !== '\\') {
         let j = i + 1;
-        while (j < repaired.length && (repaired[j] !== '"' || repaired[j-1] === '\\')) j++;
+        while (j < repaired.length && (repaired[j] !== '"' || repaired[j - 1] === '\\')) j++;
         i = j;
       } else if (char === '{') stack.push('}');
       else if (char === '[') stack.push(']');
@@ -595,7 +573,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
     while (stack.length > 0) {
       repaired += stack.pop();
     }
-    
+
     return repaired;
   },
 
@@ -610,7 +588,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
       if (parsed?.choices?.[0]?.message?.content) {
         text = parsed.choices[0].message.content.trim();
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // 2. Extract from reasoning content if available
     const rcMatch = text.match(/"reasoning_content"\s*:\s*"([\s\S]+?)"\s*,\s*"tool_calls"/);
@@ -642,7 +620,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
     if (cleanParas.length > 0) {
       return cleanParas.join('\n\n').trim();
     }
-    
+
     // If filtering removed everything, return the stripped text as a fallback
     return text;
   },
