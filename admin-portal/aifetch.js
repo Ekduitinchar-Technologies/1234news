@@ -356,6 +356,21 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
       } catch (e) { AIFETCH._log(`⚠ English body retry failed: ${e.message}`); }
     }
 
+    await AIFETCH._sleep(2500);
+
+    // ── Step 3: Nepali body ───
+    const bodyPromptNp = `You are a neutral journalist. Based on these sources:\n\n${text}\n\nTask: Write a comprehensive, detailed news article body of AT LEAST 400 words in Nepali (नेपाली). 
+If the source material is short, you MUST expand on it by adding relevant geopolitical context, historical background, explaining the implications, and elaborating on the "why" and "how". Do NOT just repeat the source.
+Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title, no headers, no word counts, no meta. Start directly with the news in Nepali.`;
+
+    let body_np = '';
+    try {
+      const bodyRawNp = await AIFETCH._llmText(bodyPromptNp);
+      body_np = AIFETCH._extractBody(bodyRawNp) || bodyRawNp.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim();
+    } catch (e) {
+      AIFETCH._log(`⚠ Nepali body failed: ${e.message}`);
+    }
+
     // Log warnings
     const wS = AIFETCH._wc(meta.summary_en || '');
     const wB = AIFETCH._wc(body_en);
@@ -363,7 +378,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
       AIFETCH._log(`⚠ Word count low for "${cluster.topic}": summary_en=${wS} words, body_en=${wB} words`);
     }
 
-    // ── Step 3: Fetch High-Res Image from Source ────────────
+    // ── Step 4: Fetch High-Res Image from Source ────────────
     let highResImage = arts.find(a => a.thumbnail)?.thumbnail || '';
     
     // Attempt to scrape High-Res Image for the main article in the cluster
@@ -437,7 +452,7 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
       summary_en: meta.summary_en || meta.summary || '',
       summary_np: meta.summary_np || meta.summary_en || meta.summary || '',
       body_en: body_en,
-      body_np: body_en, // NP body = EN body (saves 1 API call per article)
+      body_np: body_np || body_en, // fallback to EN if NP is blank
       sources: arts.map(a => ({ name: a.sourceName, url: a.link || a.sourceUrl, logo: a.sourceLogo || '' })),
       imageUrl: highResImage, // Primary high-quality image
       thumbnail: highResImage, // Fallback for components using 'thumbnail'
@@ -446,14 +461,33 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
   },
 
   // ── AI REST CALL (Free Keyless API) ──────────────────────────
-  // NOTE: pollinations.ai uses a reasoning LLM (gpt-oss-20b). Without a high
-  // max_tokens budget the model exhausts its limit mid-reasoning and returns an
-  // empty `content` field. We also request low reasoning effort so it doesn't
-  // blow most of the budget on chain-of-thought before producing JSON.
   _llm: async (prompt) => {
-    // 1. Try POST first (supports jsonMode and large prompts)
+    let lastError = null;
+
+    // Try direct POST first (supports jsonMode and large prompts)
+    for (let i = 0; i < 3; i++) {
+      try {
+        const res = await fetch(AI_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.1,
+            jsonMode: true,
+          }),
+        });
+        if (res.ok) return await res.text();
+        throw new Error(`HTTP ${res.status}`);
+      } catch (e) {
+        lastError = e;
+        await AIFETCH._sleep(1500 * (i + 1)); // backoff
+      }
+    }
+
+    // Fallback to proxy if direct POST fails repeatedly (CORS/502)
     try {
-      const res = await fetch(AI_URL, {
+      const url = `https://corsproxy.io/?${encodeURIComponent(AI_URL)}`;
+      const res2 = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -462,62 +496,62 @@ Format: Exactly 4-5 well-developed paragraphs separated by blank lines. No title
           jsonMode: true,
         }),
       });
-      if (res.ok) return await res.text();
+      if (res2.ok) return await res2.text();
+      throw new Error(`Proxy HTTP ${res2.status}`);
     } catch (e) {
-      console.warn('POST failed, trying GET fallback...', e);
+      throw new Error(`AI API JSON Failed after retries: ${lastError?.message || e.message}`);
     }
-
-    // 2. Fallback to GET for simple text extraction (ignores jsonMode)
-    const encoded = encodeURIComponent(prompt.slice(0, 2000));
-    const res2 = await fetch(`${AI_URL}${encoded}?model=openai&json=true`);
-    if (!res2.ok) {
-      const err = await res2.text();
-      throw new Error(`AI API ${res2.status}: ${err.slice(0, 100)}`);
-    }
-    return await res2.text();
   },
 
   // ── AI TEXT CALL (uses mistral to avoid reasoning wrappers) ──
   _llmText: async (prompt) => {
-    // 1. Try mistral via openai-compat POST
+    let lastError = null;
+
+    // 1. Try mistral via openai-compat POST directly
+    for (let i = 0; i < 3; i++) {
+      try {
+        const res = await fetch('https://text.pollinations.ai/openai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'mistral',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.3,
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const t = json?.choices?.[0]?.message?.content || '';
+          if (t && t.length > 50) return t;
+        }
+        throw new Error(`HTTP ${res.status}`);
+      } catch (e) {
+        lastError = e;
+        await AIFETCH._sleep(1500 * (i + 1)); // backoff
+      }
+    }
+
+    // 2. Fallback to proxy
     try {
-      const res = await fetch('https://text.pollinations.ai/openai', {
+      const url = `https://corsproxy.io/?${encodeURIComponent('https://text.pollinations.ai/openai')}`;
+      const res2 = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'mistral',
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.5,
+          temperature: 0.3,
         }),
       });
-      if (res.ok) {
-        const json = await res.json();
+      if (res2.ok) {
+        const json = await res2.json();
         const t = json?.choices?.[0]?.message?.content || '';
-        if (t && t.length > 100) return t;
+        if (t && t.length > 50) return t;
       }
-    } catch (_) {}
-
-    // 2. Try plain text POST
-    try {
-      const res2 = await fetch(AI_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.5,
-        }),
-      });
-      if (res2.ok) return await res2.text();
-    } catch (_) {}
-
-    // 3. Last resort: simple GET (best for CORS)
-    const encoded = encodeURIComponent(prompt.slice(0, 2000));
-    const res3 = await fetch(`${AI_URL}${encoded}?model=mistral`);
-    if (!res3.ok) {
-      const err = await res3.text();
-      throw new Error(`AI API (text) ${res3.status}: ${err.slice(0, 100)}`);
+      throw new Error(`Proxy HTTP ${res2.status}`);
+    } catch (e) {
+      throw new Error(`AI API Text Failed after retries: ${lastError?.message || e.message}`);
     }
-    return await res3.text();
   },
 
   // ── REPAIR TRUNCATED JSON ─────────────────────────────────────
